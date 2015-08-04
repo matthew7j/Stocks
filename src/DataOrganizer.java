@@ -13,9 +13,9 @@ public class DataOrganizer
     File organizedFile, dataFile = null;
     String organizedData = "";
     public DataOrganizer(File f) throws IOException {
-        organizedFile = new File("C:\\Users\\Matt\\Stocks\\Stock Information\\Disney\\Results\\report_2_7_15\\" +
+        organizedFile = new File("C:\\Users\\mjones\\Desktop\\Stocks\\Stock Information\\Disney\\Results\\report_2_7_15\\" +
                 "organizedData.txt");
-        dataFile = new File("C:\\Users\\Matt\\Stocks\\Stock Information\\Disney\\Results\\report_2_7_15\\" +
+        dataFile = new File("C:\\Users\\mjones\\Desktop\\Stocks\\Stock Information\\Disney\\Results\\report_2_7_15\\" +
                 "data.txt");
         if (organizedFile != null)
             organize();
@@ -25,6 +25,7 @@ public class DataOrganizer
         getRecentPriceAndPE();
         getHighLow();
         getLastYearValues();
+        getRelativePERatioAndDividendYield();
         writeToFile();
     }
     private void getSymbol() {
@@ -50,7 +51,7 @@ public class DataOrganizer
             while ((line = reader.readLine()) != null) {
                 if (line.contains("NYSE")) {
                     String str = line.replaceAll("[^.?0-9]+", " ");
-                    if (str.indexOf(' ') == 0) {
+                    while (str.indexOf(' ') == 0 || !Character.isDigit(str.charAt(0))) {
                         str = str.substring(1, str.length());
                     }
                     organizedData += "Recent Price: " + str.substring(0, str.indexOf(' ')) + "\n";
@@ -127,6 +128,7 @@ public class DataOrganizer
             Collections.sort(years);
             for (Integer y : years)
                 organizedData += y + " ";
+            organizedData += "\n";
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -172,6 +174,63 @@ public class DataOrganizer
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+    private void getRelativePERatioAndDividendYield() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile)))
+        {
+            String previousLine = "";
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+                if (line.contains("High:")) {
+                    String next = reader.readLine();
+                    if (next.contains("Low:")) {
+
+                        /* The next line in the data text file should have 4 values, 1st is the median PE, 2nd is the relative
+                         *  PE ratio, 3rd is the string YLD and 4th is the Div'd yield value */
+
+                        int placeholder;
+                        placeholder = previousLine.indexOf(" ") + 1;
+                        String secondWord = previousLine.substring(placeholder, previousLine.indexOf(" ", placeholder));
+                        placeholder = previousLine.indexOf(" ", placeholder) + 1;
+                        previousLine.substring(placeholder, previousLine.indexOf(" ", placeholder));
+                        placeholder = previousLine.indexOf(" ", placeholder) + 1;
+                        String fourthWord = previousLine.substring(placeholder);
+                        boolean isDigit = true;
+                        for (int i = 0; i < secondWord.length(); i++) {
+                            if (!Character.isDigit(secondWord.charAt(i)) && secondWord.charAt(i) != '.') {
+                                isDigit = false;
+                                break;
+                            }
+                        }
+                        organizedData += "Relative P/E Ratio: ";
+                        if (isDigit){
+                            organizedData += secondWord + "\n";
+                        }
+                        else
+                            organizedData += "\n";
+                        isDigit = true;
+                        for (int i = 0; i < fourthWord.length(); i++) {
+                            if (!Character.isDigit(fourthWord.charAt(i)) && fourthWord.charAt(i) != '.' &&
+                                    fourthWord.charAt(i) != '%') {
+                                isDigit = false;
+                                break;
+                            }
+                        }
+                        organizedData += "Dividend Yield: ";
+                        if (isDigit){
+                            organizedData += fourthWord + "\n";
+                        }
+                        else
+                            organizedData += "\n";
+                    }
+                }
+                previousLine = line;
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
     private void writeToFile() throws IOException {
