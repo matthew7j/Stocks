@@ -1,8 +1,7 @@
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Scanner;
 
 /* The purpose of this class is to organize the data created in the DataExtractor class in a more readable manner for
 *  the analysis and database engines.
@@ -10,6 +9,9 @@ import java.util.Scanner;
 
 public class DataOrganizer
 {
+    ArrayList<Integer> years;
+    ArrayList<ArrayList<String>> table;
+
     File organizedFile, dataFile = null;
     String organizedData = "";
     public DataOrganizer(File f) throws IOException {
@@ -26,6 +28,7 @@ public class DataOrganizer
         getHighLow();
         getLastYearValues();
         getRelativePERatioAndDividendYield();
+        createTableArray();
         writeToFile();
     }
     private void getSymbol() {
@@ -97,7 +100,7 @@ public class DataOrganizer
     private void getLastYearValues() {
         try (BufferedReader reader = new BufferedReader(new FileReader(dataFile)))
         {
-            ArrayList<Integer> years = new ArrayList<>();
+            years = new ArrayList<>();
             String line;
 
             while ((line = reader.readLine()) != null) {
@@ -182,7 +185,6 @@ public class DataOrganizer
             String previousLine = "";
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
                 if (line.contains("High:")) {
                     String next = reader.readLine();
                     if (next.contains("Low:")) {
@@ -233,10 +235,144 @@ public class DataOrganizer
             System.out.println(e.getMessage());
         }
     }
+
+    /* The next block of methods are for the bulk of the PDF forms. */
+
+    private void createTableArray() {
+        table = new ArrayList<>();
+        ArrayList<String> yearList = new ArrayList<>();
+
+        boolean foundFirst = false, foundSecond = false;
+
+        int original = 0;
+
+        for (Integer year : years) {
+            yearList.add(year.toString());
+        }
+        table.add(yearList);
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile)))
+        {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains(yearList.get(0)) && line.contains(yearList.get(1)) && line.contains(yearList.get(2))) {
+                    String dataLine;
+                    while (isAllNumbers(dataLine = reader.readLine())) {
+                        ArrayList<String> tempArrayList = new ArrayList<>();
+                        int placeholder = 0;
+                        dataLine += ' ';
+                        while (placeholder < dataLine.length()) {
+                            tempArrayList.add(dataLine.substring(placeholder, dataLine.indexOf(' ', placeholder)));
+                            placeholder = dataLine.indexOf(' ', placeholder) + 1;
+                        }
+                        table.add(tempArrayList);
+                        foundFirst = true;
+                    }
+                }
+                else if (line.contains(yearList.get(yearList.size() - 1)) && line.contains(yearList.get(yearList.size() - 2))) {
+                    String dataLine = " ";
+                    int i = 1;
+                    original = table.size();
+                    while (isAllNumbers((dataLine = reader.readLine()).substring(0, dataLine.indexOf(' '))) && i < (original)) {
+                        int placeholder = 0;
+                        dataLine += ' ';
+                        while (placeholder < dataLine.length()) {
+                            table.get(i).add(dataLine.substring(placeholder, dataLine.indexOf(' ', placeholder)));
+                            placeholder = dataLine.indexOf(' ', placeholder) + 1;
+                        }
+                        i++;
+                        foundSecond = true;
+                    }
+                }
+            }
+            reader.close();
+        }
+        catch (Exception e) {
+            System.out.println(e.toString());
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile)))
+        {
+            String line;
+            int len = table.size() - 1;
+            while ((line = reader.readLine()) != null) {
+                line += ' ';
+                if (line.substring(0, line.indexOf(' ')).contains(table.get(len).get(0))) {
+                    if (foundFirst && foundSecond && isAllNumbers(line)) {
+                        line = reader.readLine() + " ";
+                        boolean start = false;
+                        while (!start) {
+                            while (isAllNumbers(line)) {
+                                start = true;
+                                ArrayList<String> tempArrayList = new ArrayList<>();
+                                int placeholder = 0;
+                                if (line.charAt(line.length() - 1) != ' ') {
+                                    line += ' ';
+                                }
+                                while (placeholder < line.length()) {
+                                    tempArrayList.add(line.substring(placeholder, line.indexOf(' ', placeholder)));
+                                    placeholder = line.indexOf(' ', placeholder) + 1;
+                                }
+                                table.add(tempArrayList);
+                                line = reader.readLine();
+                            }
+                            line = reader.readLine();
+                        }
+                    }
+                }
+                else {
+                    line = line.replaceAll("\\s+$", "");
+                    if (line.substring(line.lastIndexOf(' ') + 1).contains(table.get(len).get(table.get(len).size() - 1))) {
+                        if (line.contains(table.get(len).get(table.get(len).size() - 1)) &&
+                                line.contains(table.get(len).get(table.get(len).size() - 2))) {
+                            int i = len + 1;
+                            if (foundFirst && foundSecond) {
+                                boolean start = false;
+                                while (!start) {
+                                    while (isAllNumbers((line = reader.readLine()).substring(0, line.indexOf(' ')))) {
+                                        start = true;
+                                        int placeholder = 0;
+                                        if (line.charAt(line.length() - 1) != ' ') {
+                                            line += ' ';
+                                        }
+                                        while (placeholder < line.length()) {
+                                            table.get(i).add(line.substring(placeholder, line.indexOf(' ', placeholder)));
+                                            placeholder = line.indexOf(' ', placeholder) + 1;
+                                        }
+                                        i++;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    private boolean isAllNumbers(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i)) && s.charAt(i) != '.' && s.charAt(i) != '%' && s.charAt(i) != 'd'
+                    && s.charAt(i) != ' ')
+                return false;
+        }
+        return true;
+    }
+
     private void writeToFile() throws IOException {
         FileWriter writer = new FileWriter(organizedFile);
         try {
             writer.write(organizedData);
+            for (int i = 0; i < table.size(); i++)
+            {
+                for (int j = 0; j < table.get(i).size(); j++) {
+                    writer.write(table.get(i).get(j) + " ");
+                }
+                writer.write("\n");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
