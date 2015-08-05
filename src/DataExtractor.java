@@ -20,7 +20,7 @@ public class DataExtractor
             doc = tet.open_document(f.getAbsolutePath(), "");
 
             int numPages = (int) tet.pcos_get_number(doc, "length:pages");
-            data = new File("C:\\Users\\mjones\\Desktop\\Stocks\\Stock Information\\Disney\\Results\\report_2_7_15\\data.txt");
+            data = new File("C:\\Users\\mjones\\Desktop\\Stocks\\Stock Information\\Twitter\\Results\\report_2_14_15\\data.txt");
             stockData = "";
             for (int num = 1; num <= numPages; ++num) {
                 String text;
