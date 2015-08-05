@@ -16,11 +16,9 @@ public class DataOrganizer
 
     File organizedFile, dataFile = null;
     String organizedData = "";
-    public DataOrganizer(File f) throws IOException {
-        organizedFile = new File("C:\\Users\\mjones\\Desktop\\Stocks\\Stock Information\\Twitter\\Results\\report_2_14_15\\" +
-                "organizedData.txt");
-        dataFile = new File("C:\\Users\\mjones\\Desktop\\Stocks\\Stock Information\\Twitter\\Results\\report_2_14_15\\" +
-                "data.txt");
+    public DataOrganizer(String path) throws IOException {
+        organizedFile = new File(path + "\\organizedData.txt");
+        dataFile = new File(path + "\\data.txt");
         if (organizedFile != null)
             organize();
     }

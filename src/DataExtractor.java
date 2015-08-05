@@ -9,8 +9,10 @@ import com.pdflib.TETException;
 public class DataExtractor
 {
     static final String PAGE_OPTLIST = "granularity=page";
+    String path;
 
-    public DataExtractor(File f) throws FileNotFoundException, UnsupportedEncodingException {
+    public DataExtractor(File f, String path) throws FileNotFoundException, UnsupportedEncodingException {
+        this.path = path + "\\";
         TET tet = null;
         int doc = -1;
         File data = null;
@@ -20,7 +22,7 @@ public class DataExtractor
             doc = tet.open_document(f.getAbsolutePath(), "");
 
             int numPages = (int) tet.pcos_get_number(doc, "length:pages");
-            data = new File("C:\\Users\\mjones\\Desktop\\Stocks\\Stock Information\\Twitter\\Results\\report_2_14_15\\data.txt");
+            data = new File(path  + "\\data.txt");
             stockData = "";
             for (int num = 1; num <= numPages; ++num) {
                 String text;
@@ -50,7 +52,7 @@ public class DataExtractor
                 assert tet != null;
                 tet.close_document(doc);
                 writer.close();
-                new DataOrganizer(data);
+                new DataOrganizer(path);
             }
             catch(TETException e) {
                 System.out.println(e.get_errmsg());
