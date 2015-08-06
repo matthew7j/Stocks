@@ -268,28 +268,75 @@ public class DataOrganizer
         try (BufferedReader reader = new BufferedReader(new FileReader(dataFile)))
         {
             String line;
+            boolean found = false;
             while ((line = reader.readLine()) != null) {
                 if (line.contains(yearList.get(0)) && line.contains(yearList.get(1)) && line.contains(yearList.get(2))) {
-                    String dataLine;
-                    while (isAllNumbers(dataLine = reader.readLine())) {
-                        ArrayList<String> tempArrayList = new ArrayList<>();
-                        int placeholder = 0;
-                        dataLine += ' ';
-                        while (placeholder < dataLine.length()) {
-                            tempArrayList.add(dataLine.substring(placeholder, dataLine.indexOf(' ', placeholder)));
-                            placeholder = dataLine.indexOf(' ', placeholder) + 1;
+                    String dataLine = reader.readLine();
+                    while (isAllNumbers(dataLine)) {
+                        if (!checkForOutliers(dataLine)) {
+                            ArrayList<String> tempArrayList = new ArrayList<>();
+                            int placeholder = 0;
+                            dataLine += ' ';
+                            while (placeholder < dataLine.length()) {
+                                tempArrayList.add(dataLine.substring(placeholder, dataLine.indexOf(' ', placeholder)));
+                                placeholder = dataLine.indexOf(' ', placeholder) + 1;
+                            }
+                            table.add(tempArrayList);
+                            foundFirst = true;
                         }
-                        table.add(tempArrayList);
-                        foundFirst = true;
+                        found = true;
+                        dataLine = reader.readLine();
                     }
+                    if (found)
+                    {
+                        int length = 0;
+                        while ((dataLine = reader.readLine()) != null && length < 6) {
+                            if (!checkForOutliers(dataLine) && isAllNumbers(dataLine)) {
+                                ArrayList<String> tempArrayList = new ArrayList<>();
+                                int placeholder = 0;
+                                dataLine += ' ';
+                                while (placeholder < dataLine.length()) {
+                                    tempArrayList.add(dataLine.substring(placeholder, dataLine.indexOf(' ', placeholder)));
+                                    placeholder = dataLine.indexOf(' ', placeholder) + 1;
+                                }
+                                table.add(tempArrayList);
+                            }
+                            else {
+                                length++;
+                            }
+                        }
+                    }
+
                 }
                 else if ((line.contains("-")) && (yearList.get(yearList.size() - 1).contains(line.substring(line.lastIndexOf('-') + 1))) && (
                         yearList.get(yearList.size() - 2).contains(line.substring(line.indexOf("LLC") + 4, line.lastIndexOf('-')))))
                 {
                     String dataLine;
+                    boolean isBlankFoundFirst = false;
+                    boolean isBlankFoundSecond = false;
+                    String before;
                     int i = 1;
                     original = table.size();
-                    while (isAllNumbers((dataLine = reader.readLine()).substring(0, dataLine.indexOf(' '))) && i < (original)) {
+                    dataLine = reader.readLine();
+                    while ((isAllNumbers((dataLine).substring(0, dataLine.indexOf(' '))) && i < (original))) {
+                        if (dataLine.contains("Bold figures are")) {
+                            dataLine = dataLine.replace("Bold figures are", "");
+                            isBlankFoundFirst = true;
+                        } else if (dataLine.contains("Value Line")) {
+                            dataLine = dataLine.replace("Value Line", "");
+                            isBlankFoundSecond = true;
+                        } else if (isBlankFoundFirst && isBlankFoundSecond) {
+                            before = dataLine + " ";
+
+                            dataLine = reader.readLine();
+                            if (dataLine.contains("estimates"))
+                                dataLine = reader.readLine();
+                            before += dataLine;
+                            dataLine = before;
+                            isBlankFoundFirst = false;
+                            isBlankFoundSecond = false;
+                        }
+
                         int placeholder = 0;
                         dataLine += ' ';
                         while (placeholder < dataLine.length()) {
@@ -298,6 +345,15 @@ public class DataOrganizer
                         }
                         i++;
                         foundSecond = true;
+
+                        dataLine = reader.readLine();
+                        if (dataLine.contains("C") && dataLine.length() < 5) {
+                            dataLine = reader.readLine();
+                            if (isAllNumbers(dataLine)) {
+                                table.get(i - 1).add(dataLine);
+                                dataLine = reader.readLine();
+                            }
+                        }
                     }
                 }
             }
@@ -336,10 +392,8 @@ public class DataOrganizer
                             }
                         }
                     }
-                }
-                else {
-                    line = line.replaceAll("\\s+$", "");
-                    if (len <= 18) {
+                    else {
+                        line = line.replaceAll("\\s+$", "");
                         if (line.substring(line.lastIndexOf(' ') + 1).contains(table.get(len).get(table.get(len).size() - 1))) {
                             if (line.contains(table.get(len).get(table.get(len).size() - 1)) &&
                                     line.contains(table.get(len).get(table.get(len).size() - 2))) {
@@ -428,6 +482,7 @@ public class DataOrganizer
                         (table.get(i).get(table.get(i).size() - 2).contains("P/E")) ||
                         table.get(i).get(table.get(i).size() - 2).contains("Yield")){
 
+
                     table.get(i).add(table.get(i).size() - 2, "BLANK");
                 }
                 // It is probably the values gathered from the lesser number of years
@@ -437,10 +492,21 @@ public class DataOrganizer
     private boolean isAllNumbers(String s) {
         for (int i = 0; i < s.length(); i++) {
             if (!Character.isDigit(s.charAt(i)) && s.charAt(i) != '.' && s.charAt(i) != '%' && s.charAt(i) != 'd'
-                    && s.charAt(i) != ' ' && s.charAt(i) != '-' && !s.contains("NMF") && !s.contains("Nil"))
+                    && s.charAt(i) != ' ' && s.charAt(i) != '-' && !s.contains("NMF") && !s.contains("Nil") && (!s.contains("C") || s.length() >= 3))
                 return false;
         }
         return true;
+    }
+
+    private boolean checkForOutliers(String s) {
+        try {
+            if (years.contains(Integer.parseInt(s.substring(0, s.indexOf(' '))))) {
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void writeToFile() throws IOException {

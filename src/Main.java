@@ -30,13 +30,16 @@ public class Main {
                 if (extension.equals("pdf")){
                     String fileName = file.getName();
                     fileName = fileName.substring(0, fileName.lastIndexOf('.'));
-                    new File(root + "\\Results").mkdirs();
+                    File dir1 = new File(root + "\\Results");
+                    if (!dir1.exists()) {
+                        dir1.mkdirs();
+                    }
                     String f = root + "\\Results\\" + fileName;
-                    new File(f).mkdirs();
-
+                    File dir2 = new File(f);
+                    if (!dir2.exists()) {
+                        dir2.mkdirs();
+                    }
                     new DataExtractor(file, f);
-
-                    break;
                 }
             } else if (file.isDirectory()) {
                 find_files(file);
