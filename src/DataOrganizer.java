@@ -30,6 +30,8 @@ public class DataOrganizer
         getRelativePERatioAndDividendYield();
         createTableArray();
         manipulateTableArray();
+        organizeData();
+        regulate();
         writeToFile();
     }
     private void getSymbol() {
@@ -272,7 +274,7 @@ public class DataOrganizer
             while ((line = reader.readLine()) != null) {
                 if (line.contains(yearList.get(0)) && line.contains(yearList.get(1)) && line.contains(yearList.get(2))) {
                     String dataLine = reader.readLine();
-                    while (isAllNumbers(dataLine)) {
+                    while (isAllNumbers(dataLine) && dataLine.length() > 5) {
                         if (!checkForOutliers(dataLine)) {
                             ArrayList<String> tempArrayList = new ArrayList<>();
                             int placeholder = 0;
@@ -509,18 +511,128 @@ public class DataOrganizer
         }
     }
 
+    private void organizeData() {
+        for (int i = 1; i < table.size(); i++) {
+            Collections.swap(table.get(i), table.get(i).size() - 1, table.get(i).size() - 2);
+            if (table.get(i).size() > table.get(0).size()) {
+                if (table.get(i).get(table.get(i).size() - 1).equals("C") || table.get(i).get(table.get(i).size() - 1).length() < 3) {
+                    Collections.swap(table.get(i), table.get(i).size() - 2, table.get(i).size() - 3);
+                    table.get(i).remove(table.get(i).size() - 1);
+                }
+            }
+        }
+    }
+
+    private void regulate() {
+        for (int i = 1; i < table.size(); i++) {
+            String s = table.get(i).get(table.get(i).size() - 1);
+
+            String firstWord = s.substring(0, s.indexOf(' '));
+            String secondWord = s.split("\\s+")[1];
+
+            if (s.contains("Revenues per")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Revenues per share");
+            }
+            else if (s.contains("Cash Flow")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Cash Flow per share");
+            }
+            else if (s.contains("Earnings per")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Earnings per share");
+            }
+            else if (firstWord.contains("Div") &&
+                    secondWord.contains("Decl")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Dividends Declared per share");
+            }
+            else if (firstWord.contains("Cap") &&
+                     secondWord.contains("Spending")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Capital Spending per share");
+            }
+            else if (s.contains("Book Value")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Book Value per share");
+            }
+            else if (s.contains("Common Shs")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Common Shares Outstanding");
+            }
+            else if (firstWord.contains("Avg") &&
+                    secondWord.contains("Ann") &&
+                    s.contains("P/E")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Average Annual P/E Ratio");
+            }
+            else if (s.contains("Relative P/E")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Relative P/E Ratio");
+            }
+            else if (firstWord.contains("Avg") &&
+                    secondWord.contains("Ann") &&
+                    s.contains("Yield")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Average Annual Dividend Yield");
+            }
+            else if (firstWord.contains("Working") &&
+                    secondWord.contains("Cap")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Working Capital ($mill)");
+            }
+            else if (s.contains("Revenues ($mill)")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Revenues ($mill)");
+            }
+            else if (s.contains("Shr. Equity")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Share Equity ($mill)");
+            }
+            else if (s.contains("Return on Total")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Return on Total Capital");
+            }
+            else if (s.contains("Return on Shr. Equity")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Return on Share Equity");
+            }
+            else if (s.contains("Retained to Com Eq")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Retained to Common Equity");
+            }
+            else if (firstWord.contains("All") &&
+                    secondWord.contains("Div") &&
+                    s.contains("Net Prof")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("All Dividends to Net Profit");
+            }
+        }
+    }
+
     private void writeToFile() throws IOException {
         try (FileWriter writer = new FileWriter(organizedFile)) {
-            writer.write(organizedData);
+            writer.write(organizedData + "\n\n");
             for (ArrayList<String> aTable : table) {
+                if (aTable.size() < table.get(0).size()) {
+                    int i = table.get(0).size() - aTable.size();
+                    for (int j = 0; j < i; j++) {
+                        writer.write("\t\t\t");
+                    }
+                }
                 for (String anATable : aTable) {
-                    writer.write(anATable + " ");
+                    if (anATable.length() < 3) {
+                        writer.write(anATable + " \t\t\t");
+                    }
+                    else if (anATable.length() < 4)
+                        writer.write(anATable + " \t\t");
+                    else
+                        writer.write(anATable + "\t\t");
                 }
                 writer.write("\n");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }
