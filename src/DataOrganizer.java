@@ -11,6 +11,7 @@ public class DataOrganizer
 {
     ArrayList<Integer> years;
     ArrayList<ArrayList<String>> table;
+    ArrayList<ArrayList<String>> currentPosition;
     int original;
     int highestYear;
 
@@ -32,6 +33,7 @@ public class DataOrganizer
         manipulateTableArray();
         organizeData();
         regulate();
+        getCurrentPosition();
         writeToFile();
     }
     private void getSymbol() {
@@ -610,12 +612,71 @@ public class DataOrganizer
         }
     }
 
+    private void getCurrentPosition() {
+        currentPosition = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("CURRENT POSITION")) {
+                    while (!(line = reader.readLine()).contains("Current Liab.")) {
+                        ArrayList<String> a = new ArrayList<>();
+                        if (line.contains("$MILL")) {
+                            a.add("CURRENT POSITION ($MILL)");
+                        }
+                        else {
+                            int placeholder = 0;
+                            if (line.charAt(line.length() - 1) != ' ')
+                                line += ' ';
+                            while (placeholder < line.length() - 1) {
+                                String s = line.substring(placeholder, line.indexOf(' ', placeholder));
+                                placeholder = line.indexOf(' ', placeholder) + 1;
+                                a.add(s);
+                            }
+                            currentPosition.add(a);
+                        }
+                    }
+                    ArrayList<String> a = new ArrayList<>();
+                    int placeholder = 0;
+                    if (line.charAt(line.length() - 1) != ' ')
+                        line += ' ';
+                    while (placeholder < line.length() - 1) {
+                        String s = line.substring(placeholder, line.indexOf(' ', placeholder));
+                        placeholder = line.indexOf(' ', placeholder) + 1;
+                        a.add(s);
+                    }
+                    currentPosition.add(a);
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+
     private void writeToFile() throws IOException {
         try (FileWriter writer = new FileWriter(organizedFile)) {
             writer.write(organizedData + "\n\n");
             for (ArrayList<String> aTable : table) {
                 if (aTable.size() < table.get(0).size()) {
                     int i = table.get(0).size() - aTable.size();
+                    for (int j = 0; j < i; j++) {
+                        writer.write("\t\t\t");
+                    }
+                }
+                for (String anATable : aTable) {
+                    if (anATable.length() < 3) {
+                        writer.write(anATable + " \t\t\t");
+                    }
+                    else if (anATable.length() < 4)
+                        writer.write(anATable + " \t\t");
+                    else
+                        writer.write(anATable + "\t\t");
+                }
+                writer.write("\n");
+            }
+            for (ArrayList<String> aTable : currentPosition) {
+                if (aTable.size() < currentPosition.get(0).size()) {
+                    int i = currentPosition.get(0).size() - aTable.size();
                     for (int j = 0; j < i; j++) {
                         writer.write("\t\t\t");
                     }
