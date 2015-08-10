@@ -12,6 +12,7 @@ public class DataOrganizer
     ArrayList<Integer> years;
     ArrayList<ArrayList<String>> table;
     ArrayList<ArrayList<String>> currentPosition;
+    ArrayList<ArrayList<String>> annualRates;
     int original;
     int highestYear;
 
@@ -34,6 +35,7 @@ public class DataOrganizer
         organizeData();
         regulate();
         getCurrentPosition();
+        getAnnualRates();
         writeToFile();
     }
     private void getSymbol() {
@@ -653,6 +655,84 @@ public class DataOrganizer
         }
     }
 
+    private void getAnnualRates() {
+        annualRates = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+            boolean past1bool = false;
+            String past1 = " ";
+            String past2 = " ";
+            String years = " ";
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("ANNUAL RATES")) {
+                    ArrayList<String> temp = new ArrayList<>();
+                    String[] words = line.split("\\s+");
+                    for (int i = 0; i < words.length; i++) {
+                        if (!words[i].contains("ANNUAL") && !words[i].contains("RATES")) {
+                            if (words[i].contains("Past") && past1bool == false) {
+                                past1 += "Past ";
+                                past1bool = true;
+                            }
+                            else if (words[i].contains("Past") && past1bool == true) {
+                                past2 += "Past ";
+                            }
+                            else {
+                                years += words[i] + " ";
+                            }
+                        }
+                    }
+                    line = reader.readLine();
+                    String[] words2 = line.split("\\s+");
+                    for (int i = 0; i < words2.length; i++) {
+                        if (words2[i].contains("sh)")) {
+                            i = i + 1;
+                            if (isAllNumbers(words2[i])) {
+                                past1 += words2[i] + " years";
+                                i = i + 2;
+                                if (isAllNumbers(words2[i])) {
+                                    past2 += words2[i] + " years";
+                                    i = i + 2;
+                                    if (words2[i].contains("to")) {
+                                        years += " to " + words2[i + 1];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    temp.add(past1);
+                    temp.add(past2);
+                    temp.add(years);
+                    annualRates.add(temp);
+                    while (!(line = reader.readLine()).contains("Book Value")) {
+                        ArrayList<String> a = new ArrayList<>();
+                        int placeholder = 0;
+                        if (line.charAt(line.length() - 1) != ' ')
+                            line += ' ';
+                        while (placeholder < line.length() - 1) {
+                            String s = line.substring(placeholder, line.indexOf(' ', placeholder));
+                            placeholder = line.indexOf(' ', placeholder) + 1;
+                            a.add(s);
+                        }
+                        annualRates.add(a);
+                    }
+                    ArrayList<String> a = new ArrayList<>();
+                    int placeholder = 0;
+                    if (line.charAt(line.length() - 1) != ' ')
+                        line += ' ';
+                    while (placeholder < line.length() - 1) {
+                        String s = line.substring(placeholder, line.indexOf(' ', placeholder));
+                        placeholder = line.indexOf(' ', placeholder) + 1;
+                        a.add(s);
+                    }
+                    annualRates.add(a);
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+
     private void writeToFile() throws IOException {
         try (FileWriter writer = new FileWriter(organizedFile)) {
             writer.write(organizedData + "\n\n");
@@ -672,11 +752,31 @@ public class DataOrganizer
                     else
                         writer.write(anATable + "\t\t");
                 }
-                writer.write("\n");
+                writer.write("\n\n");
             }
+            writer.write("\nCurrent Position: \n");
             for (ArrayList<String> aTable : currentPosition) {
                 if (aTable.size() < currentPosition.get(0).size()) {
                     int i = currentPosition.get(0).size() - aTable.size();
+                    for (int j = 0; j < i; j++) {
+                        writer.write("\t\t\t");
+                    }
+                }
+                for (String anATable : aTable) {
+                    if (anATable.length() < 3) {
+                        writer.write(anATable + " \t\t\t");
+                    }
+                    else if (anATable.length() < 4)
+                        writer.write(anATable + " \t\t");
+                    else
+                        writer.write(anATable + "\t\t");
+                }
+                writer.write("\n");
+            }
+            writer.write("\nAnnual Rates: \n");
+            for (ArrayList<String> aTable : annualRates) {
+                if (aTable.size() < annualRates.get(0).size()) {
+                    int i = annualRates.get(0).size() - aTable.size();
                     for (int j = 0; j < i; j++) {
                         writer.write("\t\t\t");
                     }
