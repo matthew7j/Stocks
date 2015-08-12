@@ -1,7 +1,8 @@
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /* The purpose of this class is to organize the data created in the DataExtractor class in a more readable manner for
 *  the analysis and database engines.
@@ -10,12 +11,15 @@ import java.util.Collections;
 public class DataOrganizer
 {
     ArrayList<Integer> years;
+    ArrayList<ArrayList<String>> TSTInfo;
     ArrayList<ArrayList<String>> table;
     ArrayList<ArrayList<String>> currentPosition;
     ArrayList<ArrayList<String>> annualRates;
     ArrayList<ArrayList<String>> quarterlyRevenues;
     ArrayList<ArrayList<String>> earningsPerShare;
     ArrayList<ArrayList<String>> quarterlyDividendsPaid;
+    ArrayList<ArrayList<String>> institutionalDecisions;
+    ArrayList<ArrayList<String>> insiderDecisions;
 
     int original;
     int highestYear;
@@ -43,6 +47,9 @@ public class DataOrganizer
         getQuarterlyRevenues();
         getEarningsPerShare();
         getQuarterlyDividendsPaid();
+        getInstitutionalDecisions();
+        getInsiderDecisions();
+        getTSTInfo();
         writeToFile();
     }
     private void getSymbol() {
@@ -273,9 +280,7 @@ public class DataOrganizer
 
         boolean foundFirst = false, foundSecond = false;
 
-        for (Integer year : years) {
-            yearList.add(year.toString());
-        }
+        yearList.addAll(years.stream().map(Object::toString).collect(Collectors.toList()));
         table.add(yearList);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(dataFile)))
@@ -436,7 +441,7 @@ public class DataOrganizer
             }
         }
         catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
     }
     private void manipulateTableArray() {
@@ -448,19 +453,18 @@ public class DataOrganizer
         ArrayList<ArrayList<String>> temp = new ArrayList<>();
         boolean foundTitle = false;
         String title = "";
-        for (int i = 0; i < table.size(); i++) {
+        for (ArrayList<String> aTable : table) {
             ArrayList<String> tempList = new ArrayList<>();
-            for (int j = 0; j < table.get(i).size(); j++) {
-                if (isAllNumbers(table.get(i).get(j)) || table.get(i).get(j).contains("Nil") || table.get(i).get(j) == "NMF") {
+            for (String anATable : aTable) {
+                if (isAllNumbers(anATable) || anATable.contains("Nil") || Objects.equals(anATable, "NMF")) {
                     if (foundTitle) {
                         tempList.add(title);
                         foundTitle = false;
                         title = "";
                     }
-                    tempList.add(table.get(i).get(j));
-                }
-                else {
-                    title += table.get(i).get(j) + " ";
+                    tempList.add(anATable);
+                } else {
+                    title += anATable + " ";
                     foundTitle = true;
                 }
             }
@@ -471,17 +475,16 @@ public class DataOrganizer
     }
     private ArrayList<ArrayList<String>> putDashesIntoTwos(ArrayList<ArrayList<String>> a) {
         ArrayList<ArrayList<String>> temp = new ArrayList<>();
-        for (int i = 0; i < a.size(); i++) {
+        for (ArrayList<String> anA : a) {
             ArrayList<String> tempList = new ArrayList<>();
-            for (int j = 0; j < a.get(i).size(); j++) {
-                if (a.get(i).get(j).equals("-")) {
-                    if (a.get(i).get(j + 1).equals("-")) {
+            for (int j = 0; j < anA.size(); j++) {
+                if (anA.get(j).equals("-")) {
+                    if (anA.get(j + 1).equals("-")) {
                         tempList.add("--");
                         j = j + 1;
                     }
-                }
-                else {
-                    tempList.add(a.get(i).get(j));
+                } else {
+                    tempList.add(anA.get(j));
                 }
             }
             temp.add(tempList);
@@ -515,10 +518,7 @@ public class DataOrganizer
 
     private boolean checkForOutliers(String s) {
         try {
-            if (years.contains(Integer.parseInt(s.substring(0, s.indexOf(' '))))) {
-                return true;
-            }
-            return false;
+            return years.contains(Integer.parseInt(s.substring(0, s.indexOf(' '))));
         } catch (Exception e) {
             return false;
         }
@@ -623,6 +623,118 @@ public class DataOrganizer
         }
     }
 
+    private void getInsiderDecisions() {
+        insiderDecisions = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Insider Decisions")) {
+                    line = reader.readLine();
+                    ArrayList<String> title = new ArrayList<>();
+                    title.add("Insider Decisions");
+                    ArrayList<String> months = new ArrayList<>();
+                    String[] monthList = line.split("\\s+");
+                    for (int i = 0; i < monthList.length; i++) {
+                        if (monthList[i].length() == 1) {
+                            months.add(monthList[i]);
+                        }
+                    }
+                    while (!line.contains("to Buy")) {
+                        line = reader.readLine();
+                    }
+                    ArrayList<String> buys = new ArrayList<>();
+                    String[] buyList = line.split("\\s+");
+                    buys.add("Buys: ");
+                    for (String aBuyList : buyList) {
+                        if (isAllNumbers(aBuyList)) {
+                            buys.add(aBuyList);
+                        }
+                    }
+                    while (!line.contains("Options")) {
+                        line = reader.readLine();
+                    }
+                    ArrayList<String> options = new ArrayList<>();
+                    String[] optionList = line.split("\\s+");
+                    options.add("Options: ");
+                    for (String aOptionList : optionList) {
+                        if (isAllNumbers(aOptionList)) {
+                            options.add(aOptionList);
+                        }
+                    }
+                    while (!line.contains("to Sell")) {
+                        line = reader.readLine();
+                    }
+                    ArrayList<String> sells = new ArrayList<>();
+                    String[] sellList = line.split("\\s+");
+                    sells.add("Sells: ");
+                    for (String aSellList : sellList) {
+                        if (isAllNumbers(aSellList)) {
+                            sells.add(aSellList);
+                        }
+                    }
+                    insiderDecisions.add(title);
+                    insiderDecisions.add(months);
+                    insiderDecisions.add(buys);
+                    insiderDecisions.add(options);
+                    insiderDecisions.add(sells);
+                }
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getInstitutionalDecisions() {
+        institutionalDecisions = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Institutional Decisions")) {
+                    line = reader.readLine();
+                    ArrayList<String> title = new ArrayList<>();
+                    title.add("Institutional Decisions");
+                    ArrayList<String> quarters = new ArrayList<>();
+                    String[] quarterList = line.split("\\s+");
+                    if (quarterList.length == 3) {
+                        quarters.add(quarterList[0]);
+                        quarters.add(quarterList[1]);
+                        quarters.add(quarterList[2]);
+                    }
+                    while (!line.contains("to Buy")) {
+                        line = reader.readLine();
+                    }
+                    ArrayList<String> buys = new ArrayList<>();
+                    String[] buyList = line.split("\\s+");
+                    buys.add("Buys: ");
+                    for (String aBuyList : buyList) {
+                        if (isAllNumbers(aBuyList)) {
+                            buys.add(aBuyList);
+                        }
+                    }
+                    while (!line.contains("to Sell")) {
+                        line = reader.readLine();
+                    }
+                    ArrayList<String> sells = new ArrayList<>();
+                    String[] sellList = line.split("\\s+");
+                    sells.add("Sells: ");
+                    for (String aSellList : sellList) {
+                        if (isAllNumbers(aSellList)) {
+                            sells.add(aSellList);
+                        }
+                    }
+                    institutionalDecisions.add(title);
+                    institutionalDecisions.add(quarters);
+                    institutionalDecisions.add(buys);
+                    institutionalDecisions.add(sells);
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+
     private void getCurrentPosition() {
         currentPosition = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
@@ -631,8 +743,8 @@ public class DataOrganizer
                 if (line.contains("CURRENT POSITION")) {
                     while (!(line = reader.readLine()).contains("Current Liab.")) {
                         ArrayList<String> a = new ArrayList<>();
-                        if (line.contains("$MILL")) {
-                            a.add("CURRENT POSITION ($MILL)");
+                        if (line.contains("MILL")) {
+                            a.add("Current Position ($mill)");
                         }
                         else {
                             int placeholder = 0;
@@ -643,8 +755,8 @@ public class DataOrganizer
                                 placeholder = line.indexOf(' ', placeholder) + 1;
                                 a.add(s);
                             }
-                            currentPosition.add(a);
                         }
+                        currentPosition.add(a);
                     }
                     ArrayList<String> a = new ArrayList<>();
                     int placeholder = 0;
@@ -670,24 +782,24 @@ public class DataOrganizer
         try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
             String line;
             boolean past1bool = false;
-            String past1 = " ";
-            String past2 = " ";
-            String years = " ";
+            String past1 = "";
+            String past2 = "";
+            String years = "";
             while ((line = reader.readLine()) != null) {
                 if (line.contains("ANNUAL RATES")) {
+                    ArrayList<String> title = new ArrayList<>();
+                    title.add("Annual Rates");
                     ArrayList<String> temp = new ArrayList<>();
                     String[] words = line.split("\\s+");
-                    for (int i = 0; i < words.length; i++) {
-                        if (!words[i].contains("ANNUAL") && !words[i].contains("RATES")) {
-                            if (words[i].contains("Past") && past1bool == false) {
+                    for (String word : words) {
+                        if (!word.contains("ANNUAL") && !word.contains("RATES")) {
+                            if (word.contains("Past") && !past1bool) {
                                 past1 += "Past ";
                                 past1bool = true;
-                            }
-                            else if (words[i].contains("Past") && past1bool == true) {
+                            } else if (word.contains("Past") && past1bool) {
                                 past2 += "Past ";
-                            }
-                            else {
-                                years += words[i] + " ";
+                            } else {
+                                years += word + " ";
                             }
                         }
                     }
@@ -712,6 +824,7 @@ public class DataOrganizer
                     temp.add(past1);
                     temp.add(past2);
                     temp.add(years);
+                    annualRates.add(title);
                     annualRates.add(temp);
                     while (!(line = reader.readLine()).contains("Book Value")) {
                         ArrayList<String> a = new ArrayList<>();
@@ -751,18 +864,19 @@ public class DataOrganizer
 
             while ((line = reader.readLine()) != null) {
                 if (line.contains("QUARTERLY REVENUES")) {
+                    ArrayList<String> title = new ArrayList<>();
                     if (line.contains("mill")) {
-                        ArrayList<String> title = new ArrayList<>();
                         title.add("Quarterly Revenues ($mill)");
                     }
+                    quarterlyRevenues.add(title);
                     line = reader.readLine();
                     line += " ";
                     if (line.contains(".")) {
                         ArrayList<String> months = new ArrayList<>();
                         String[] monthList = line.split("\\s+");
-                        for (int i = 0; i < monthList.length; i++) {
-                            if (monthList[i].contains(".")) {
-                                months.add(monthList[i].substring(0, monthList[i].indexOf('.')));
+                        for (String aMonthList : monthList) {
+                            if (aMonthList.contains(".")) {
+                                months.add(aMonthList.substring(0, aMonthList.indexOf('.')));
                             }
                         }
                         quarterlyRevenues.add(months);
@@ -772,9 +886,7 @@ public class DataOrganizer
                             ArrayList<String> values = new ArrayList<>();
                             String[] valueList = line.split("\\s+");
                             if (valueList.length > 2) {
-                                for (int i = 0; i < valueList.length; i++) {
-                                    values.add(valueList[i]);
-                                }
+                                Collections.addAll(values, valueList);
                                 quarterlyRevenues.add(values);
                             }
                         }
@@ -798,15 +910,15 @@ public class DataOrganizer
                 if (line.contains("EARNINGS PER SHARE")) {
                     ArrayList<String> title = new ArrayList<>();
                     title.add("Earnings per Share");
-
+                    earningsPerShare.add(title);
                     line = reader.readLine();
                     line += " ";
                     if (line.contains(".")) {
                         ArrayList<String> months = new ArrayList<>();
                         String[] monthList = line.split("\\s+");
-                        for (int i = 0; i < monthList.length; i++) {
-                            if (monthList[i].contains(".")) {
-                                months.add(monthList[i].substring(0, monthList[i].indexOf('.')));
+                        for (String aMonthList : monthList) {
+                            if (aMonthList.contains(".")) {
+                                months.add(aMonthList.substring(0, aMonthList.indexOf('.')));
                             }
                         }
                         earningsPerShare.add(months);
@@ -816,9 +928,7 @@ public class DataOrganizer
                             ArrayList<String> values = new ArrayList<>();
                             String[] valueList = line.split("\\s+");
                             if (valueList.length > 2) {
-                                for (int i = 0; i < valueList.length; i++) {
-                                    values.add(valueList[i]);
-                                }
+                                Collections.addAll(values, valueList);
                                 earningsPerShare.add(values);
                             }
                         }
@@ -848,9 +958,9 @@ public class DataOrganizer
                     if (line.contains(".")) {
                         ArrayList<String> months = new ArrayList<>();
                         String[] monthList = line.split("\\s+");
-                        for (int i = 0; i < monthList.length; i++) {
-                            if (monthList[i].contains(".")) {
-                                months.add(monthList[i].substring(0, monthList[i].indexOf('.')));
+                        for (String aMonthList : monthList) {
+                            if (aMonthList.contains(".")) {
+                                months.add(aMonthList.substring(0, aMonthList.indexOf('.')));
                             }
                         }
                         quarterlyDividendsPaid.add(months);
@@ -861,9 +971,7 @@ public class DataOrganizer
                             ArrayList<String> values = new ArrayList<>();
                             String[] valueList = line.split("\\s+");
                             if (valueList.length > 2) {
-                                for (int i = 0; i < valueList.length; i++) {
-                                    values.add(valueList[i]);
-                                }
+                                Collections.addAll(values, valueList);
                                 quarterlyDividendsPaid.add(values);
                             }
                         }
@@ -879,124 +987,93 @@ public class DataOrganizer
         }
     }
 
-    private void writeToFile() throws IOException {
-        try (FileWriter writer = new FileWriter(organizedFile)) {
-            writer.write(organizedData + "\n\n");
-            for (ArrayList<String> aTable : table) {
-                if (aTable.size() < table.get(0).size()) {
-                    int i = table.get(0).size() - aTable.size();
-                    for (int j = 0; j < i; j++) {
-                        writer.write("\t\t\t");
+    private void getTSTInfo() {
+        TSTInfo = new ArrayList();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("TIMELINESS")) {
+                    ArrayList<String> info = new ArrayList<>();
+                    String[] infoList = line.split("\\s+");
+                    for (String anInfoList : infoList) {
+                        if (isAllNumbers(anInfoList) && anInfoList.length() == 1) {
+                            info.add("Timeliness: " + anInfoList);
+                        }
                     }
+                    TSTInfo.add(info);
                 }
-                for (String anATable : aTable) {
-                    if (anATable.length() < 3) {
-                        writer.write(anATable + " \t\t\t");
+                else if (line.contains("SAFETY")) {
+                    ArrayList<String> info2 = new ArrayList<>();
+                    String[] infoList2 = line.split("\\s+");
+                    for (String anInfoList2 : infoList2) {
+                        if (isAllNumbers(anInfoList2) && anInfoList2.length() == 1) {
+                            info2.add("Safety: " + anInfoList2);
+                        }
                     }
-                    else if (anATable.length() < 4)
-                        writer.write(anATable + " \t\t");
-                    else
-                        writer.write(anATable + "\t\t");
+                    TSTInfo.add(info2);
                 }
-                writer.write("\n\n");
+                else if (line.contains("TECHNICAL")) {
+                    ArrayList<String> info3 = new ArrayList<>();
+                    String[] infoList3 = line.split("\\s+");
+                    for (String anInfoList3 : infoList3) {
+                        if (isAllNumbers(anInfoList3) && anInfoList3.length() == 1) {
+                            info3.add("Technical: " + anInfoList3);
+                        }
+                    }
+                    TSTInfo.add(info3);
+                }
             }
-            writer.write("\nCurrent Position: \n");
-            for (ArrayList<String> aTable : currentPosition) {
-                if (aTable.size() < currentPosition.get(0).size()) {
-                    int i = currentPosition.get(0).size() - aTable.size();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void printToFile(ArrayList<ArrayList<String>> a) {
+        try (FileWriter writer = new FileWriter(organizedFile, true)) {
+            for (ArrayList<String> aTable : a) {
+                if (aTable.size() < a.get(0).size()) {
+                    int i = a.get(0).size() - aTable.size();
                     for (int j = 0; j < i; j++) {
-                        writer.write("\t\t\t");
+                        writer.write(" ");
                     }
                 }
                 for (String anATable : aTable) {
                     if (anATable.length() < 3) {
-                        writer.write(anATable + " \t\t\t");
-                    }
-                    else if (anATable.length() < 4)
-                        writer.write(anATable + " \t\t");
+                        writer.write(anATable + " ");
+                    } else if (anATable.length() < 4)
+                        writer.write(anATable + " ");
                     else
-                        writer.write(anATable + "\t\t");
-                }
-                writer.write("\n");
-            }
-            writer.write("\nAnnual Rates: \n");
-            for (ArrayList<String> aTable : annualRates) {
-                if (aTable.size() < annualRates.get(0).size()) {
-                    int i = annualRates.get(0).size() - aTable.size();
-                    for (int j = 0; j < i; j++) {
-                        writer.write("\t\t\t");
-                    }
-                }
-                for (String anATable : aTable) {
-                    if (anATable.length() < 3) {
-                        writer.write(anATable + " \t\t\t");
-                    }
-                    else if (anATable.length() < 4)
-                        writer.write(anATable + " \t\t");
-                    else
-                        writer.write(anATable + "\t\t");
-                }
-                writer.write("\n");
-            }
-            writer.write("\nQuarterly Revenues: \n");
-            for (ArrayList<String> aTable : quarterlyRevenues) {
-                if (aTable.size() < quarterlyRevenues.get(0).size()) {
-                    int i = quarterlyRevenues.get(0).size() - aTable.size();
-                    for (int j = 0; j < i; j++) {
-                        writer.write("\t\t\t");
-                    }
-                }
-                for (String anATable : aTable) {
-                    if (anATable.length() < 3) {
-                        writer.write(anATable + " \t\t\t");
-                    }
-                    else if (anATable.length() < 4)
-                        writer.write(anATable + " \t\t");
-                    else
-                        writer.write(anATable + "\t\t");
-                }
-                writer.write("\n");
-            }
-            writer.write("\nEarnings per Share: \n");
-            for (ArrayList<String> aTable : earningsPerShare) {
-                if (aTable.size() < earningsPerShare.get(0).size()) {
-                    int i = earningsPerShare.get(0).size() - aTable.size();
-                    for (int j = 0; j < i; j++) {
-                        writer.write("\t\t\t");
-                    }
-                }
-                for (String anATable : aTable) {
-                    if (anATable.length() < 3) {
-                        writer.write(anATable + " \t\t\t");
-                    }
-                    else if (anATable.length() < 4)
-                        writer.write(anATable + " \t\t");
-                    else
-                        writer.write(anATable + "\t\t");
+                        writer.write(anATable + " ");
                 }
                 writer.write("\n");
             }
             writer.write("\n");
-            for (ArrayList<String> aTable : quarterlyDividendsPaid) {
-                if (aTable.size() < quarterlyDividendsPaid.get(0).size()) {
-                    int i = quarterlyDividendsPaid.get(0).size() - aTable.size();
-                    for (int j = 0; j < i; j++) {
-                        writer.write("\t\t\t");
-                    }
-                }
-                for (String anATable : aTable) {
-                    if (anATable.length() < 3) {
-                        writer.write(anATable + " \t\t\t");
-                    }
-                    else if (anATable.length() < 4)
-                        writer.write(anATable + " \t\t");
-                    else
-                        writer.write(anATable + "\t\t");
-                }
-                writer.write("\n");
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void clearFile() {
+        try (FileWriter writer = new FileWriter(organizedFile)) {
+            writer.write(organizedData + "\n\n");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeToFile() throws IOException {
+        clearFile();
+
+        printToFile(TSTInfo);
+        printToFile(table);
+        printToFile(currentPosition);
+        printToFile(annualRates);
+        printToFile(quarterlyRevenues);
+        printToFile(earningsPerShare);
+        printToFile(quarterlyDividendsPaid);
+        printToFile(institutionalDecisions);
+        printToFile(insiderDecisions);
     }
 }
