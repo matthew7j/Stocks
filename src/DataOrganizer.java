@@ -13,6 +13,10 @@ public class DataOrganizer
     ArrayList<ArrayList<String>> table;
     ArrayList<ArrayList<String>> currentPosition;
     ArrayList<ArrayList<String>> annualRates;
+    ArrayList<ArrayList<String>> quarterlyRevenues;
+    ArrayList<ArrayList<String>> earningsPerShare;
+    ArrayList<ArrayList<String>> quarterlyDividendsPaid;
+
     int original;
     int highestYear;
 
@@ -36,6 +40,9 @@ public class DataOrganizer
         regulate();
         getCurrentPosition();
         getAnnualRates();
+        getQuarterlyRevenues();
+        getEarningsPerShare();
+        getQuarterlyDividendsPaid();
         writeToFile();
     }
     private void getSymbol() {
@@ -434,7 +441,7 @@ public class DataOrganizer
     }
     private void manipulateTableArray() {
         putTitleIntoOne();
-        putDashesIntoTwos();
+        table = putDashesIntoTwos(table);
         fillInBlanks();
     }
     private void putTitleIntoOne(){
@@ -462,23 +469,25 @@ public class DataOrganizer
         table.clear();
         table = temp;
     }
-    private void putDashesIntoTwos() {
+    private ArrayList<ArrayList<String>> putDashesIntoTwos(ArrayList<ArrayList<String>> a) {
         ArrayList<ArrayList<String>> temp = new ArrayList<>();
-        for (int i = 0; i < table.size(); i++) {
+        for (int i = 0; i < a.size(); i++) {
             ArrayList<String> tempList = new ArrayList<>();
-            for (int j = 0; j < table.get(i).size(); j++) {
-                if (table.get(i).get(j).equals("-")) {
-                    if (table.get(i).get(j + 1).equals("-")) {
+            for (int j = 0; j < a.get(i).size(); j++) {
+                if (a.get(i).get(j).equals("-")) {
+                    if (a.get(i).get(j + 1).equals("-")) {
                         tempList.add("--");
+                        j = j + 1;
                     }
                 }
                 else {
-                    tempList.add(table.get(i).get(j));
+                    tempList.add(a.get(i).get(j));
                 }
             }
             temp.add(tempList);
         }
-        table = temp;
+        a = temp;
+        return a;
     }
     private void fillInBlanks() {
         for (int i = 1; i < table.size(); i++) {
@@ -649,6 +658,7 @@ public class DataOrganizer
                     currentPosition.add(a);
                 }
             }
+            currentPosition = putDashesIntoTwos(currentPosition);
         }
         catch (Exception e) {
             System.out.println(e.toString());
@@ -727,9 +737,145 @@ public class DataOrganizer
                     annualRates.add(a);
                 }
             }
+            annualRates = putDashesIntoTwos(annualRates);
         }
         catch (Exception e) {
             System.out.println(e.toString());
+        }
+    }
+
+    private void getQuarterlyRevenues() {
+        quarterlyRevenues = new ArrayList();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("QUARTERLY REVENUES")) {
+                    if (line.contains("mill")) {
+                        ArrayList<String> title = new ArrayList<>();
+                        title.add("Quarterly Revenues ($mill)");
+                    }
+                    line = reader.readLine();
+                    line += " ";
+                    if (line.contains(".")) {
+                        ArrayList<String> months = new ArrayList<>();
+                        String[] monthList = line.split("\\s+");
+                        for (int i = 0; i < monthList.length; i++) {
+                            if (monthList[i].contains(".")) {
+                                months.add(monthList[i].substring(0, monthList[i].indexOf('.')));
+                            }
+                        }
+                        quarterlyRevenues.add(months);
+                    }
+                    while (!line.contains("Ends") && !line.contains("EARNINGS")) {
+                        if (isAllNumbers(line)) {
+                            ArrayList<String> values = new ArrayList<>();
+                            String[] valueList = line.split("\\s+");
+                            if (valueList.length > 2) {
+                                for (int i = 0; i < valueList.length; i++) {
+                                    values.add(valueList[i]);
+                                }
+                                quarterlyRevenues.add(values);
+                            }
+                        }
+                        line = reader.readLine();
+                    }
+                }
+            }
+            quarterlyRevenues = putDashesIntoTwos(quarterlyRevenues);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getEarningsPerShare() {
+        earningsPerShare = new ArrayList();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("EARNINGS PER SHARE")) {
+                    ArrayList<String> title = new ArrayList<>();
+                    title.add("Earnings per Share");
+
+                    line = reader.readLine();
+                    line += " ";
+                    if (line.contains(".")) {
+                        ArrayList<String> months = new ArrayList<>();
+                        String[] monthList = line.split("\\s+");
+                        for (int i = 0; i < monthList.length; i++) {
+                            if (monthList[i].contains(".")) {
+                                months.add(monthList[i].substring(0, monthList[i].indexOf('.')));
+                            }
+                        }
+                        earningsPerShare.add(months);
+                    }
+                    while (!line.contains("QUARTERLY")) {
+                        if (isAllNumbers(line)) {
+                            ArrayList<String> values = new ArrayList<>();
+                            String[] valueList = line.split("\\s+");
+                            if (valueList.length > 2) {
+                                for (int i = 0; i < valueList.length; i++) {
+                                    values.add(valueList[i]);
+                                }
+                                earningsPerShare.add(values);
+                            }
+                        }
+                        line = reader.readLine();
+                    }
+                }
+            }
+            earningsPerShare = putDashesIntoTwos(earningsPerShare);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getQuarterlyDividendsPaid() {
+        quarterlyDividendsPaid = new ArrayList();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("QUARTERLY DIVIDENDS PAID")) {
+                    ArrayList<String> title = new ArrayList<>();
+                    title.add("Quarterly Dividends Paid");
+                    quarterlyDividendsPaid.add(title);
+                    line = reader.readLine();
+                    line += " ";
+                    if (line.contains(".")) {
+                        ArrayList<String> months = new ArrayList<>();
+                        String[] monthList = line.split("\\s+");
+                        for (int i = 0; i < monthList.length; i++) {
+                            if (monthList[i].contains(".")) {
+                                months.add(monthList[i].substring(0, monthList[i].indexOf('.')));
+                            }
+                        }
+                        quarterlyDividendsPaid.add(months);
+                    }
+                    int count = 0;
+                    while (!line.contains("Trailing") && count < 7) {
+                        if (isAllNumbers(line)) {
+                            ArrayList<String> values = new ArrayList<>();
+                            String[] valueList = line.split("\\s+");
+                            if (valueList.length > 2) {
+                                for (int i = 0; i < valueList.length; i++) {
+                                    values.add(valueList[i]);
+                                }
+                                quarterlyDividendsPaid.add(values);
+                            }
+                        }
+                        line = reader.readLine();
+                        count++;
+                    }
+                }
+            }
+            quarterlyDividendsPaid = putDashesIntoTwos(quarterlyDividendsPaid);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -777,6 +923,63 @@ public class DataOrganizer
             for (ArrayList<String> aTable : annualRates) {
                 if (aTable.size() < annualRates.get(0).size()) {
                     int i = annualRates.get(0).size() - aTable.size();
+                    for (int j = 0; j < i; j++) {
+                        writer.write("\t\t\t");
+                    }
+                }
+                for (String anATable : aTable) {
+                    if (anATable.length() < 3) {
+                        writer.write(anATable + " \t\t\t");
+                    }
+                    else if (anATable.length() < 4)
+                        writer.write(anATable + " \t\t");
+                    else
+                        writer.write(anATable + "\t\t");
+                }
+                writer.write("\n");
+            }
+            writer.write("\nQuarterly Revenues: \n");
+            for (ArrayList<String> aTable : quarterlyRevenues) {
+                if (aTable.size() < quarterlyRevenues.get(0).size()) {
+                    int i = quarterlyRevenues.get(0).size() - aTable.size();
+                    for (int j = 0; j < i; j++) {
+                        writer.write("\t\t\t");
+                    }
+                }
+                for (String anATable : aTable) {
+                    if (anATable.length() < 3) {
+                        writer.write(anATable + " \t\t\t");
+                    }
+                    else if (anATable.length() < 4)
+                        writer.write(anATable + " \t\t");
+                    else
+                        writer.write(anATable + "\t\t");
+                }
+                writer.write("\n");
+            }
+            writer.write("\nEarnings per Share: \n");
+            for (ArrayList<String> aTable : earningsPerShare) {
+                if (aTable.size() < earningsPerShare.get(0).size()) {
+                    int i = earningsPerShare.get(0).size() - aTable.size();
+                    for (int j = 0; j < i; j++) {
+                        writer.write("\t\t\t");
+                    }
+                }
+                for (String anATable : aTable) {
+                    if (anATable.length() < 3) {
+                        writer.write(anATable + " \t\t\t");
+                    }
+                    else if (anATable.length() < 4)
+                        writer.write(anATable + " \t\t");
+                    else
+                        writer.write(anATable + "\t\t");
+                }
+                writer.write("\n");
+            }
+            writer.write("\n");
+            for (ArrayList<String> aTable : quarterlyDividendsPaid) {
+                if (aTable.size() < quarterlyDividendsPaid.get(0).size()) {
+                    int i = quarterlyDividendsPaid.get(0).size() - aTable.size();
                     for (int j = 0; j < i; j++) {
                         writer.write("\t\t\t");
                     }
