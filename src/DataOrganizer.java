@@ -20,6 +20,8 @@ public class DataOrganizer
     ArrayList<ArrayList<String>> quarterlyDividendsPaid;
     ArrayList<ArrayList<String>> institutionalDecisions;
     ArrayList<ArrayList<String>> insiderDecisions;
+    ArrayList<ArrayList<String>> capitalStructure;
+    ArrayList<ArrayList<String>> stats;
 
     int original;
     int highestYear;
@@ -50,7 +52,10 @@ public class DataOrganizer
         getInstitutionalDecisions();
         getInsiderDecisions();
         getTSTInfo();
+        getCapitalStructure();
+        getStats();
         writeToFile();
+        new DatabaseEngine(organizedFile);
     }
     private void getSymbol() {
         try (BufferedReader reader = new BufferedReader(new FileReader(dataFile)))
@@ -58,7 +63,16 @@ public class DataOrganizer
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.contains("NYSE")) {
-                    String symbol = line.substring(line.indexOf('-'));
+                    String name = line.substring(0, line.indexOf("NYSE") - 1);
+                    organizedData += "Stock Name: " + name + "\n";
+                    String symbol = line.substring(line.lastIndexOf('-'));
+                    symbol = symbol.substring(1, symbol.indexOf(' '));
+                    organizedData += "Symbol: " + symbol + "\n";
+                }
+                else if (line.contains("NDQ")) {
+                    String name = line.substring(0, line.indexOf("NDQ") - 1);
+                    organizedData += "Stock Name: " + name + "\n";
+                    String symbol = line.substring(line.lastIndexOf('-'));
                     symbol = symbol.substring(1, symbol.indexOf(' '));
                     organizedData += "Symbol: " + symbol + "\n";
                 }
@@ -164,6 +178,7 @@ public class DataOrganizer
             }
             getFirstYearValues(years);
             Collections.sort(years);
+            organizedData += "Years: ";
             for (Integer y : years)
                 organizedData += y + " ";
             organizedData += "\n";
@@ -1030,6 +1045,195 @@ public class DataOrganizer
         }
     }
 
+    private void getCapitalStructure() {
+        capitalStructure = new ArrayList();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("CAPITAL STRUCTURE")) {
+                    while (!line.contains("CURRENT POSITION")) {
+                        line = reader.readLine();
+                        if (line != null) {
+                            if (line.contains("Total Debt")) {
+                                ArrayList<String> temp = new ArrayList<>();
+                                String s = "Total Debt: ";
+                                String[] words = line.split("\\s+");
+                                for (int i = 0; i < words.length; i++) {
+                                    if (words[i].contains("Debt")) {
+                                        if (words[i + 1].contains("$")) {
+                                            s += words[i + 1];
+                                            if (words[i + 2].contains("mill")) {
+                                                s += " mill.";
+                                            } else if (words[i + 2].contains("bill")) {
+                                                s += " bill.";
+                                            }
+                                        }
+                                    }
+                                }
+                                temp.add(s);
+                                capitalStructure.add(temp);
+                            } else if (line.contains("LT Debt")) {
+                                ArrayList<String> temp = new ArrayList<>();
+                                String s = "LT Debt: ";
+                                String[] words = line.split("\\s+");
+                                for (int i = 0; i < words.length; i++) {
+                                    if (words[i].contains("Debt")) {
+                                        if (words[i + 1].contains("$")) {
+                                            s += words[i + 1];
+                                            if (words[i + 2].contains("mill")) {
+                                                s += " mill.";
+                                            } else if (words[i + 2].contains("bill")) {
+                                                s += " bill.";
+                                            }
+                                        }
+                                    } else if (words[i].contains("Interest")) {
+                                        s += "\nLT Interest: ";
+                                        if (words[i + 1].contains("$")) {
+                                            s += words[i + 1];
+                                            if (words[i + 2].contains("mill")) {
+                                                s += " mill.";
+                                            } else if (words[i + 2].contains("bill")) {
+                                                s += " bill.";
+                                            }
+                                        }
+                                    }
+                                }
+                                temp.add(s);
+                                capitalStructure.add(temp);
+                            } else if (line.contains("Annual Rentals")) {
+                                ArrayList<String> temp = new ArrayList<>();
+                                String s = "Annual Rentals: ";
+                                String[] words = line.split("\\s+");
+                                for (int i = 0; i < words.length; i++) {
+                                    if (words[i].contains("rentals")) {
+                                        if (words[i + 1].contains("$")) {
+                                            s += words[i + 1];
+                                            if (words[i + 2].contains("mill")) {
+                                                s += " mill.";
+                                            } else if (words[i + 2].contains("bill")) {
+                                                s += " bill.";
+                                            }
+                                        }
+                                    }
+                                }
+                                temp.add(s);
+                                capitalStructure.add(temp);
+                            } else if (line.contains("Common Stock")) {
+                                ArrayList<String> temp = new ArrayList<>();
+                                String s = "Common Stock: ";
+                                String[] words = line.split("\\s+");
+                                for (int i = 0; i < words.length; i++) {
+                                    if (words[i].contains("Stock")) {
+                                        if (words[i + 1].contains(",")) {
+                                            s += words[i + 1] + " shares";
+                                        }
+                                    }
+                                }
+                                temp.add(s);
+                                capitalStructure.add(temp);
+                            } else if (line.contains("MARKET CAP")) {
+                                ArrayList<String> temp = new ArrayList<>();
+                                String s = "Market Cap: ";
+                                String[] words = line.split("\\s+");
+                                for (int i = 0; i < words.length; i++) {
+                                    if (words[i].contains("CAP")) {
+                                        if (words[i + 1].contains("$")) {
+                                            s += words[i + 1];
+                                            if (words[i + 2].contains("mill")) {
+                                                s += " mill.";
+                                            } else if (words[i + 2].contains("bill")) {
+                                                s += " bill.";
+                                            }
+                                        }
+                                    } else if (words[i].contains("(")) {
+                                        s += "\n" + words[i].substring(1) + " " + words[i + 1].substring(0,
+                                                words[i + 1].length() - 1);
+                                    }
+                                }
+                                temp.add(s);
+                                capitalStructure.add(temp);
+                            }
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getStats() {
+        stats = new ArrayList();
+        try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Financial Strength")) {
+                    ArrayList<String> temp = new ArrayList<>();
+                    String s = "Company's Financial Strength: ";
+                    String[] words = line.split("\\s+");
+                    if (isGrade(words[words.length - 1])) {
+                        s += words[words.length - 1];
+                        temp.add(s);
+                        stats.add(temp);
+                    }
+                }
+                else if (line.contains("Price Stability")) {
+                    ArrayList<String> temp = new ArrayList<>();
+                    String s = "Stock's Price Stability: ";
+                    String[] words = line.split("\\s+");
+                    if (isGrade(words[words.length - 1])) {
+                        s += words[words.length - 1];
+                        temp.add(s);
+                        stats.add(temp);
+                    }
+                }
+                else if (line.contains("Earnings Predictability")) {
+                    ArrayList<String> temp = new ArrayList<>();
+                    String s = "Earnings Predictability: ";
+                    String[] words = line.split("\\s+");
+                    if (isGrade(words[words.length - 1])) {
+                        s += words[words.length - 1];
+                        temp.add(s);
+                        stats.add(temp);
+                    }
+                }
+                else if (line.contains("Price Growth Persistence")) {
+                    ArrayList<String> temp = new ArrayList<>();
+                    String s = "Price Growth Persistence: ";
+                    String[] words = line.split("\\s+");
+                    if (isGrade(words[words.length - 1])) {
+                        s += words[words.length - 1];
+                        temp.add(s);
+                        stats.add(temp);
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isGrade(String s) {
+        char[] chars = s.toCharArray();
+        boolean ret = false;
+        for (char aChar : chars) {
+            if (aChar == 'A' || aChar == 'B' || aChar == 'C' || aChar == 'D' || aChar == 'F' ||
+                    aChar == '-' || aChar == '+' || Character.isDigit(aChar)) {
+                ret = true;
+            } else {
+                ret = false;
+                break;
+            }
+        }
+        return ret;
+    }
+
     private void printToFile(ArrayList<ArrayList<String>> a) {
         try (FileWriter writer = new FileWriter(organizedFile, true)) {
             for (ArrayList<String> aTable : a) {
@@ -1075,5 +1279,7 @@ public class DataOrganizer
         printToFile(quarterlyDividendsPaid);
         printToFile(institutionalDecisions);
         printToFile(insiderDecisions);
+        printToFile(capitalStructure);
+        printToFile(stats);
     }
 }
