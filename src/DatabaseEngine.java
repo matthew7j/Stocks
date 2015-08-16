@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
+import java.util.Objects;
 
 public class DatabaseEngine
 {
@@ -17,6 +18,10 @@ public class DatabaseEngine
     double recentPrice, peRatio, highProj, lowProj, relativePERatio, dividendYield,
             timeliness, safety, technical;
 
+    ArrayList<ArrayList<String>> concreteYearData;
+    ArrayList<ArrayList<String>> futureYearData;
+    ArrayList<ArrayList<String>> titlesData;
+
     public DatabaseEngine(File f) {
         this.f = f;
         getData();
@@ -24,6 +29,7 @@ public class DatabaseEngine
         getYears();
         addYears();
         getValues();
+        getYearData();
     }
 
     private void getValues() {
@@ -203,6 +209,103 @@ public class DatabaseEngine
                 }
             }
         }
+    }
+
+    /* This method will get the data that is not estimates in the year data table */
+
+    private void getYearData() {
+        String path = f.getAbsolutePath();
+        String estimatedYear = (path.substring(0, path.lastIndexOf('\\')));
+        estimatedYear = estimatedYear.substring(estimatedYear.lastIndexOf('_') + 1);
+
+        futureYearData = new ArrayList<>();
+        concreteYearData = new ArrayList<>();
+        titlesData = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(f)))
+        {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Technical")) {
+                    reader.readLine();
+                    line = reader.readLine();
+                    int numFutureYears = 0;
+                    boolean numFutureYearsFound = false;
+
+                    while (!line.contains("Current Position")) {
+                        String[] words = line.split("\\s+");
+                        ArrayList<String> futureTemp = new ArrayList<>();
+                        ArrayList<String> concreteTemp = new ArrayList<>();
+                        ArrayList<String> titlesTemp = new ArrayList<>();
+
+                        String title = "";
+
+                        boolean inConcreteData = false;
+                        int n = 0;
+                        for (int i = words.length - 1; i >= 0; i--) {
+                            if (!numFutureYearsFound) {
+                                if (words[i].contains(estimatedYear)) {
+                                    futureTemp.add(words[i]);
+                                    numFutureYearsFound = true;
+                                    inConcreteData = true;
+                                }
+                                else {
+                                    numFutureYears++;
+                                    futureTemp.add(words[i]);
+                                }
+                            }
+                            else {
+                                if (!inConcreteData) {
+                                    if (checkIfNumber(words[i]) && !Objects.equals(words[i], "")) {
+                                        n++;
+                                        if (n < numFutureYears) {
+                                            futureTemp.add(words[i]);
+                                        }
+                                        else if (n == numFutureYears) {
+                                            futureTemp.add(words[i]);
+                                            inConcreteData = true;
+                                        }
+                                    }
+                                    else {
+                                        if (!Objects.equals(words[i], "")) {
+                                            String oldTitle = title;
+                                            title = words[i] + " " + oldTitle;
+                                        }
+                                    }
+                                }
+                                else {
+                                    if (!Objects.equals(words[i], ""))
+                                        concreteTemp.add(words[i]);
+                                }
+                            }
+                        }
+                        if (title.length() > 2)
+                            title = title.substring(0, title.length() - 1);
+
+                        titlesTemp.add(title);
+                        titlesData.add(titlesTemp);
+                        futureYearData.add(futureTemp);
+                        concreteYearData.add(concreteTemp);
+                        line = reader.readLine();
+                    }
+                }
+            }
+            System.out.println("Does it work?");
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private boolean checkIfNumber(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i)) && s.charAt(i) != '.' && s.charAt(i) != '%' &&
+                    !s.contains("BLANK") && s.charAt(i) != 'd') {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Connection createConnection() {
