@@ -21,15 +21,93 @@ public class DatabaseEngine
     ArrayList<ArrayList<String>> concreteYearData;
     ArrayList<ArrayList<String>> futureYearData;
     ArrayList<ArrayList<String>> titlesData;
+    ArrayList<ArrayList<String>> currentPosition;
+    ArrayList<ArrayList<String>> quarterlyRevenues;
 
     public DatabaseEngine(File f) {
         this.f = f;
         getData();
-        addStock();
+        /*addStock();
         getYears();
-        addYears();
+        addYears();*/
         getValues();
+        getCurrentPosition();
+        getQuarterlyRevenues();
         getYearData();
+    }
+
+    private void getQuarterlyRevenues() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(f)))
+        {
+            quarterlyRevenues = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Quarterly Revenues")) {
+                    line = reader.readLine();
+                    String[] ys = line.split("\\s+");
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void getCurrentPosition() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(f)))
+        {
+            currentPosition = new ArrayList<>();
+            String line;
+            int numYears = 0;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Current Position")) {
+                    line = reader.readLine();
+                    String[] ys = line.split("\\s+");
+                    ArrayList<String> temp = new ArrayList<>();
+                    ArrayList<String> assets = new ArrayList<>();
+                    ArrayList<String> liabs = new ArrayList<>();
+                    for (String s : ys) {
+                        if (!s.contains("/")) {
+                            temp.add(s);
+                            numYears++;
+                        }
+                    }
+                    temp.add("quarter");
+                    currentPosition.add(temp);
+                    while (!line.contains("Current Assets")) {
+                        line = reader.readLine();
+                    }
+                    String[] words = line.split("\\s+");
+                    int j = 0;
+                    for (int i = 0; i < numYears;) {
+                        if (checkIfNumber(words[j])) {
+                            i++;
+                            assets.add(words[j]);
+                        }
+                        j++;
+                    }
+                    assets.add(words[words.length - 1]);
+                    currentPosition.add(assets);
+                    while (!line.contains("Current Liab.")) {
+                        line = reader.readLine();
+                    }
+                    String[] nums = line.split("\\s+");
+                    j = 0;
+                    for (int i = 0; i < numYears;) {
+                        if (checkIfNumber(nums[j])) {
+                            i++;
+                            liabs.add(nums[j]);
+                        }
+                        j++;
+                    }
+                    liabs.add(nums[nums.length - 1]);
+                    currentPosition.add(liabs);
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private void getValues() {
@@ -291,7 +369,6 @@ public class DatabaseEngine
                     }
                 }
             }
-            System.out.println("Does it work?");
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
