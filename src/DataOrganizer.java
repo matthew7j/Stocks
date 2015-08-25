@@ -1017,6 +1017,9 @@ public class DataOrganizer
                             info.add("Timeliness: " + anInfoList);
                         }
                     }
+                    if (info.size() == 0) {
+                        info.add("Timeliness: NA");
+                    }
                     TSTInfo.add(info);
                 }
                 else if (line.contains("SAFETY")) {
@@ -1027,6 +1030,9 @@ public class DataOrganizer
                             info2.add("Safety: " + anInfoList2);
                         }
                     }
+                    if (info2.size() == 0) {
+                        info2.add("Safety: NA");
+                    }
                     TSTInfo.add(info2);
                 }
                 else if (line.contains("TECHNICAL")) {
@@ -1036,6 +1042,9 @@ public class DataOrganizer
                         if (isAllNumbers(anInfoList3) && anInfoList3.length() == 1) {
                             info3.add("Technical: " + anInfoList3);
                         }
+                    }
+                    if (info3.size() == 0) {
+                        info3.add("Technical: NA");
                     }
                     TSTInfo.add(info3);
                 }

@@ -5,9 +5,7 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.Objects;
+import java.util.*;
 
 public class DatabaseEngine
 {
@@ -23,6 +21,9 @@ public class DatabaseEngine
     ArrayList<ArrayList<String>> titlesData;
     ArrayList<ArrayList<String>> currentPosition;
     ArrayList<ArrayList<String>> quarterlyRevenues;
+    ArrayList<ArrayList<String>> earningsPerShare;
+    ArrayList<ArrayList<String>> quarterlyDividendsPaid;
+    ArrayList<ArrayList<String>> annualRates;
 
     public DatabaseEngine(File f) {
         this.f = f;
@@ -32,8 +33,140 @@ public class DatabaseEngine
         addYears();*/
         getValues();
         getCurrentPosition();
-        getQuarterlyRevenues();
         getYearData();
+        getQuarterlyRevenues();
+        getEarningsPerShare();
+        getQuarterlyDividendsPaid();
+        getAnnualRates();
+    }
+
+    private void getAnnualRates() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(f)))
+        {
+            annualRates = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Annual Rates")) {
+                    line = reader.readLine();
+                    while (!line.contains("Quarterly")) {
+                        String[] ys = line.split("\\s+");
+
+                        if (ys.length > 7 && annualRates.size() == 0) {
+                            ArrayList<String> temp = new ArrayList<>();
+                            temp.add("Past 10");
+                            temp.add("Past 5");
+                            temp.add("Future");
+                            annualRates.add(temp);
+                        }
+                        else
+                        {
+                            ArrayList<String> temp = new ArrayList<>();
+                            if (ys[0].contains("Cash")) {
+                                temp.add("Cash Flow");
+                                for (int i = 2; i < ys.length; i++) {
+                                    temp.add(ys[i]);
+                                }
+                            }
+                            else if (ys[0].contains("Book")) {
+                                temp.add("Book Value");
+                                for (int i = 2; i < ys.length; i++) {
+                                    temp.add(ys[i]);
+                                }
+                            }
+                            else {
+                                for (int i = 0; i < ys.length; i++) {
+                                    temp.add(ys[i]);
+                                }
+                            }
+                            if (temp.size() > 1)
+                                annualRates.add(temp);
+                        }
+                        line = reader.readLine();
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void getQuarterlyDividendsPaid() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(f)))
+        {
+            quarterlyDividendsPaid = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Quarterly Dividends Paid")) {
+                    line = reader.readLine();
+                    while (!line.contains("Institutional")) {
+                        String[] ys = line.split("\\s+");
+
+                        if (ys.length == 4 && quarterlyDividendsPaid.size() == 0) {
+                            ArrayList<String> temp = new ArrayList<>();
+                            temp.add("Q1");
+                            temp.add("Q2");
+                            temp.add("Q3");
+                            temp.add("Q4");
+                            quarterlyDividendsPaid.add(temp);
+                        }
+                        else
+                        {
+                            if (concreteYearData.get(0).contains(ys[0]) || futureYearData.get(0).contains(ys[0])) {
+                                ArrayList<String> temp = new ArrayList<>();
+                                for (String s : ys) {
+                                    temp.add(s);
+                                }
+                                quarterlyDividendsPaid.add(temp);
+                            }
+                        }
+                        line = reader.readLine();
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void getEarningsPerShare() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(f)))
+        {
+            earningsPerShare = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Earnings per Share")) {
+                    line = reader.readLine();
+                    while (!line.contains("Quarterly")) {
+                        String[] ys = line.split("\\s+");
+
+                        if (ys.length == 4 && earningsPerShare.size() == 0) {
+                            ArrayList<String> temp = new ArrayList<>();
+                            temp.add("Q1");
+                            temp.add("Q2");
+                            temp.add("Q3");
+                            temp.add("Q4");
+                            earningsPerShare.add(temp);
+                        }
+                        else
+                        {
+                            if (concreteYearData.get(0).contains(ys[0]) || futureYearData.get(0).contains(ys[0])) {
+                                ArrayList<String> temp = new ArrayList<>();
+                                for (String s : ys) {
+                                    temp.add(s);
+                                }
+                                earningsPerShare.add(temp);
+                            }
+                        }
+                        line = reader.readLine();
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private void getQuarterlyRevenues() {
@@ -41,10 +174,37 @@ public class DatabaseEngine
         {
             quarterlyRevenues = new ArrayList<>();
             String line;
+            String ending = "";
             while ((line = reader.readLine()) != null) {
                 if (line.contains("Quarterly Revenues")) {
+                    if (line.contains("mill")) {
+                        ending = "($mill)";
+                    }
                     line = reader.readLine();
-                    String[] ys = line.split("\\s+");
+                    while (!line.contains("Earnings per Share")) {
+                        String[] ys = line.split("\\s+");
+
+                        if (ys.length == 4 && quarterlyRevenues.size() == 0) {
+                            ArrayList<String> temp = new ArrayList<>();
+                            temp.add("Q1");
+                            temp.add("Q2");
+                            temp.add("Q3");
+                            temp.add("Q4");
+                            quarterlyRevenues.add(temp);
+                        }
+                        else
+                        {
+                            if (concreteYearData.get(0).contains(ys[0]) || futureYearData.get(0).contains(ys[0])) {
+                                ArrayList<String> temp = new ArrayList<>();
+                                for (String s : ys) {
+                                    temp.add(s);
+                                }
+                                temp.add(ending);
+                                quarterlyRevenues.add(temp);
+                            }
+                        }
+                        line = reader.readLine();
+                    }
                 }
             }
         }
