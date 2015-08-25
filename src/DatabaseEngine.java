@@ -130,12 +130,21 @@ public class DatabaseEngine
             while ((line = reader.readLine()) != null) {
                 if (line.contains(s)) {
                     if (line.contains("%")) {
-                        ret = Double.parseDouble(line.substring(line.indexOf(':') + 1, line.indexOf('%')));
-                        break;
-                    }
-                    else {
-                        ret = Double.parseDouble(line.substring(line.indexOf(':') + 1));
-                        break;
+                        try {
+                            ret = Double.parseDouble(line.substring(line.indexOf(':') + 1, line.indexOf('%')));
+                            break;
+                        }
+                        catch (NumberFormatException ex) {
+                            ret = 0;
+                        }
+                    } else {
+                        try {
+                            ret = Double.parseDouble(line.substring(line.indexOf(':') + 1));
+                            break;
+                        }
+                        catch (NumberFormatException ex) {
+                            ret = 0;
+                        }
                     }
                 }
             }
@@ -311,7 +320,7 @@ public class DatabaseEngine
                     int numFutureYears = 0;
                     boolean numFutureYearsFound = false;
 
-                    while (!line.contains("Current Position")) {
+                    while (!line.contains("Current Position") && !line.contains("Annual Rates")) {
                         String[] words = line.split("\\s+");
                         ArrayList<String> futureTemp = new ArrayList<>();
                         ArrayList<String> concreteTemp = new ArrayList<>();
@@ -349,7 +358,7 @@ public class DatabaseEngine
                                         if (!Objects.equals(words[i], "")) {
                                             String oldTitle = title;
                                             title = words[i] + " " + oldTitle;
-                                        }
+                                         }
                                     }
                                 }
                                 else {

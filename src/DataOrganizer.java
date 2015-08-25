@@ -87,7 +87,7 @@ public class DataOrganizer
         {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.contains("NYSE")) {
+                if (line.contains("NYSE") || line.contains("NDQ")) {
                     String str = line.replaceAll("[^.?0-9]+", " ");
                     while (str.indexOf(' ') == 0 || !Character.isDigit(str.charAt(0))) {
                         str = str.substring(1, str.length());
