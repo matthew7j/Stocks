@@ -10,11 +10,11 @@ import java.util.*;
 public class DatabaseEngine
 {
     File f;
-    String stockName;
-    String stockSymbol;
     ArrayList<Integer> years;
     double recentPrice, peRatio, highProj, lowProj, relativePERatio, dividendYield,
-            timeliness, safety, technical;
+            timeliness, safety, technical, priceStability, growthPersistence, predictability;
+
+    String totalDebt, LTDebt, LTInterest, commonStock, marketCap, stockSymbol, stockName, financialStrength;
 
     ArrayList<ArrayList<String>> concreteYearData;
     ArrayList<ArrayList<String>> futureYearData;
@@ -280,6 +280,48 @@ public class DatabaseEngine
         timeliness = getSingleValue("Timeliness");
         safety = getSingleValue("Safety");
         technical = getSingleValue("Technical");
+        priceStability = getSingleValue("Price Stability");
+        growthPersistence = getSingleValue("Price Growth Persistence");
+        predictability = getSingleValue("Earnings Predictability");
+        totalDebt = getSingleValueWithString("Total Debt");
+        LTDebt = getSingleValueWithString("LT Debt");
+        LTInterest = getSingleValueWithString("LT Interest");
+        commonStock = getSingleValueWithString("Common Stock");
+        marketCap = getSingleValueWithString("Market Cap");
+        financialStrength = getSingleValueWithString("Financial Strength");
+    }
+
+    private String getSingleValueWithString(String s) {
+        String ret = "";
+        try (BufferedReader reader = new BufferedReader(new FileReader(f)))
+        {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains(s)) {
+                    if (line.contains("%")) {
+                        try {
+                            ret = line.substring(line.indexOf(':') + 1, line.indexOf('%'));
+                            break;
+                        }
+                        catch (NumberFormatException ex) {
+                            ret = "0";
+                        }
+                    } else {
+                        try {
+                            ret = line.substring(line.indexOf(':') + 1);
+                            break;
+                        }
+                        catch (NumberFormatException ex) {
+                            ret = "0";
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return ret;
     }
 
     private Double getSingleValue(String s) {
