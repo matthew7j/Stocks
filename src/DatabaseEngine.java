@@ -382,6 +382,20 @@ public class DatabaseEngine
         catch (Exception e) {
             System.out.println(e.getMessage());
         }
+        int numConcreteYears = concreteYearData.get(0).size();
+        for (int i = 1; i < concreteYearData.size(); i++) {
+            if (numConcreteYears - concreteYearData.get(i).size() == 1) {
+                // Likely is a blank box in the PDF form.. adding another double dash to the beginning.
+                concreteYearData.get(i).add(concreteYearData.get(i).size(), "--");
+            }
+        }
+        int numFutureYears = futureYearData.get(0).size();
+        for (int i = 1; i < futureYearData.size(); i++) {
+            if (numFutureYears - futureYearData.get(i).size() == 2) {
+                // Likely is a blank box in the PDF form.. adding another double dash to the beginning.
+                futureYearData.get(i).add(futureYearData.get(i).size(), "--");
+            }
+        }
     }
 
     private boolean checkIfNumber(String s) {

@@ -517,6 +517,7 @@ public class DataOrganizer
 
 
                     table.get(i).add(table.get(i).size() - 2, "BLANK");
+                    table.get(i).add(table.get(i).size() - 3, "BLANK");
                 }
                 // It is probably the values gathered from the lesser number of years
             }
