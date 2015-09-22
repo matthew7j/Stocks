@@ -1,10 +1,8 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.sql.Statement;
-import java.sql.ResultSet;
-import java.sql.Connection;
-import java.sql.DriverManager;
+import java.io.PrintWriter;
+import java.sql.*;
 import java.util.*;
 
 public class DatabaseEngine
@@ -27,10 +25,11 @@ public class DatabaseEngine
 
     public DatabaseEngine(File f) {
         this.f = f;
-        getData();
-        /*addStock();
+        createDatabase();
+        populateQuartersTable();
+
+        getStockNameAndSymbol();
         getYears();
-        addYears();*/
         getValues();
         getCurrentPosition();
         getYearData();
@@ -38,6 +37,225 @@ public class DatabaseEngine
         getEarningsPerShare();
         getQuarterlyDividendsPaid();
         getAnnualRates();
+
+        addStock();
+        addYears();
+        addConcreteYearData();
+    }
+
+    private void addConcreteYearData() {
+        Connection conn = null;
+        Statement s = null;
+        try {
+            conn = createConnection();
+            s = conn.createStatement();
+
+            String sql = "INSERT INTO Stocks.stocks (Stocks.stocks.StockName, Stocks.stocks.StockSymbol) " +
+                    "VALUES ('" + stockName + "', '" + stockSymbol + "');";
+            s.executeUpdate(sql);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            closeConnection(null, s, conn);
+        }
+
+    }
+
+    private void populateQuartersTable() {
+        boolean exists = checkForQuarters();
+        Connection conn = null;
+        Statement s = null;
+        if (!exists) {
+            try {
+                conn = createConnection();
+                s = conn.createStatement();
+                for (int i = 1; i < 5; i++) {
+                    String sql = "INSERT INTO Stocks.quarters (Stocks.Quarters.QuarterValue) " +
+                            "VALUES ('" + i + "');";
+                    s.executeUpdate(sql);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            } finally {
+                closeConnection(null, s, conn);
+            }
+        }
+    }
+
+    private void createDatabase() {
+        Connection conn = null;
+        Statement s = null;
+
+        try {
+            conn = createConnection();
+            s = conn.createStatement();
+            try {
+                s.executeUpdate("CREATE DATABASE Stocks");
+            }
+            catch (SQLException e) {
+                if (e.getErrorCode() == 1007) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            try {
+                s.executeUpdate("CREATE TABLE Stocks.Stocks " +
+                        "(" +
+                        "StockID INT NOT NULL AUTO_INCREMENT, " +
+                        "StockName VARCHAR(255), " +
+                        "StockSymbol VARCHAR(255), " +
+                        "PRIMARY KEY (StockID) " +
+                        ");");
+            }
+            catch (SQLException e) {
+                if (e.getErrorCode() == 1007) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            try {
+                s.executeUpdate("CREATE TABLE Stocks.Years " +
+                        "(" +
+                        "YearID INT NOT NULL AUTO_INCREMENT, " +
+                        "YearValue VARCHAR(255), " +
+                        "PRIMARY KEY (YearID) " +
+                        ");");
+            }
+            catch (SQLException e) {
+                if (e.getErrorCode() == 1007) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            try {
+                s.executeUpdate("CREATE TABLE Stocks.Quarters " +
+                        "(" +
+                        "QuarterID INT NOT NULL AUTO_INCREMENT, " +
+                        "QuarterValue VARCHAR(255), " +
+                        "PRIMARY KEY (QuarterID) " +
+                        ");");
+            }
+            catch (SQLException e) {
+                if (e.getErrorCode() == 1007) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            try {
+                s.executeUpdate("CREATE TABLE Stocks.ConcreteYearData " +
+                        "(" +
+                        "ConcreteYearDataID INT NOT NULL AUTO_INCREMENT, " +
+                        "StockID INT, " +
+                        "YearID INT, " +
+                        "RevenuesPerShare VARCHAR(255), " +
+                        "CashFlowPerShare VARCHAR(255), " +
+                        "EarningsPerShare VARCHAR(255), " +
+                        "DividendsDeclaredPerShare VARCHAR(255), " +
+                        "CapitalSpendingPerShare VARCHAR(255), " +
+                        "BookValuePerShare VARCHAR(255), " +
+                        "CommonSharesOutstanding VARCHAR(255), " +
+                        "AverageAnnualPERatio VARCHAR(255), " +
+                        "RelativePERatio VARCHAR(255), " +
+                        "AverageAnnualDividendYield VARCHAR(255), " +
+                        "Revenues VARCHAR(255), " +
+                        "OperatingMargin VARCHAR(255), " +
+                        "Depreciation VARCHAR(255), " +
+                        "NetProfit VARCHAR(255), " +
+                        "IncomeTaxRate VARCHAR(255), " +
+                        "NetProfitMargin VARCHAR(255), " +
+                        "WorkingCapital VARCHAR(255), " +
+                        "LongTermDebt VARCHAR(255), " +
+                        "ShareEquity VARCHAR(255), " +
+                        "ReturnOnTotalCapital VARCHAR(255), " +
+                        "ReturnOnShareEquity VARCHAR(255), " +
+                        "RetainedToCommonEquity VARCHAR(255), " +
+                        "AllDividendsToNetProfit VARCHAR(255), " +
+                        "CurrentPosition VARCHAR(255), " +
+                        "PRIMARY KEY (ConcreteYearDataID), " +
+                        "FOREIGN KEY (StockID) REFERENCES Stocks.stocks(StockID), " +
+                        "FOREIGN KEY (YearID) REFERENCES Stocks.years(YearID)" +
+                        ");");
+            }
+            catch (SQLException e) {
+                if (e.getErrorCode() == 1007) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            try {
+                s.executeUpdate("CREATE TABLE Stocks.FutureYearData " +
+                        "(" +
+                        "FutureYearDataID INT NOT NULL AUTO_INCREMENT, " +
+                        "StockID INT, " +
+                        "YearID INT, " +
+                        "RevenuesPerShare VARCHAR(255), " +
+                        "CashFlowPerShare VARCHAR(255), " +
+                        "EarningsPerShare VARCHAR(255), " +
+                        "DividendsDeclaredPerShare VARCHAR(255), " +
+                        "CapitalSpendingPerShare VARCHAR(255), " +
+                        "BookValuePerShare VARCHAR(255), " +
+                        "CommonSharesOutstanding VARCHAR(255), " +
+                        "AverageAnnualPERatio VARCHAR(255), " +
+                        "RelativePERatio VARCHAR(255), " +
+                        "AverageAnnualDividendYield VARCHAR(255), " +
+                        "Revenues VARCHAR(255), " +
+                        "OperatingMargin VARCHAR(255), " +
+                        "Depreciation VARCHAR(255), " +
+                        "NetProfit VARCHAR(255), " +
+                        "IncomeTaxRate VARCHAR(255), " +
+                        "NetProfitMargin VARCHAR(255), " +
+                        "WorkingCapital VARCHAR(255), " +
+                        "LongTermDebt VARCHAR(255), " +
+                        "ShareEquity VARCHAR(255), " +
+                        "ReturnOnTotalCapital VARCHAR(255), " +
+                        "ReturnOnShareEquity VARCHAR(255), " +
+                        "RetainedToCommonEquity VARCHAR(255), " +
+                        "AllDividendsToNetProfit VARCHAR(255), " +
+                        "HighProj VARCHAR(255), " +
+                        "LowProj VARCHAR(255), " +
+                        "PRIMARY KEY (FutureYearDataID), " +
+                        "FOREIGN KEY (StockID) REFERENCES Stocks.stocks(StockID), " +
+                        "FOREIGN KEY (YearID) REFERENCES Stocks.years(YearID)" +
+                        ");");
+            }
+            catch (SQLException e) {
+                if (e.getErrorCode() == 1007) {
+                    System.out.println(e.getMessage());
+                }
+            }
+            try {
+                s.executeUpdate("CREATE TABLE Stocks.ConcreteQuarterData " +
+                        "(" +
+                        "ConcreteQuarterDataID INT NOT NULL AUTO_INCREMENT, " +
+                        "StockID INT, " +
+                        "YearID INT, " +
+                        "QuarterID INT, " +
+                        "RecentPrice VARCHAR(255), " +
+                        "PERatio VARCHAR(255), " +
+                        "RelativePERatio VARCHAR(255), " +
+                        "DividendYield VARCHAR(255), " +
+                        "Timeliness VARCHAR(255), " +
+                        "Safety VARCHAR(255), " +
+                        "Technical VARCHAR(255), " +
+                        "TotalDebt VARCHAR(255), " +
+                        "CommonStock VARCHAR(255), " +
+                        "MarketCap VARCHAR(255), " +
+                        "PRIMARY KEY (ConcreteQuarterDataID), " +
+                        "FOREIGN KEY (StockID) REFERENCES Stocks.stocks(StockID), " +
+                        "FOREIGN KEY (YearID) REFERENCES Stocks.years(YearID)," +
+                        "FOREIGN KEY (QuarterID) REFERENCES Stocks.quarters(QuarterID)" +
+                        ");");
+            }
+            catch (SQLException e) {
+                if (e.getErrorCode() == 1007) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
+        catch (SQLException e) {
+            if (e.getErrorCode() == 1007) {
+                System.out.println(e.getMessage());
+            }
+        }
+        finally
+        {
+            closeConnection(null, s, conn);
+        }
     }
 
     private void getAnnualRates() {
@@ -357,7 +575,7 @@ public class DatabaseEngine
         return ret;
     }
 
-    private void getData() {
+    private void getStockNameAndSymbol() {
         try (BufferedReader reader = new BufferedReader(new FileReader(f)))
         {
             String line;
@@ -379,6 +597,9 @@ public class DatabaseEngine
         }
     }
     private void getYears() {
+        /*
+         * Get the years from the data text file and put them in an arraylist to add to the Years Table
+        */
         years = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(f)))
         {
@@ -399,6 +620,11 @@ public class DatabaseEngine
     }
 
     private boolean checkForStock() {
+        /*
+         * This function will check the Stocks Database Table and
+         *  return true if that stock exists and false if it doesn't
+        */
+
         Connection conn = null;
         ResultSet rs = null;
         Statement s = null;
@@ -407,8 +633,8 @@ public class DatabaseEngine
             conn = createConnection();
             s = conn.createStatement();
 
-            String stockSQL = "SELECT Stocks.Stock.stockID FROM Stocks.Stock " +
-                    "WHERE Stocks.Stock.StockSymbol = '" + stockSymbol + "';";
+            String stockSQL = "SELECT Stocks.stocks.stockID FROM Stocks.stocks " +
+                    "WHERE Stocks.stocks.StockSymbol = '" + stockSymbol + "';";
 
             try {
                 rs = s.executeQuery(stockSQL);
@@ -437,8 +663,37 @@ public class DatabaseEngine
             conn = createConnection();
             s = conn.createStatement();
 
-            String stockSQL = "SELECT Stocks.Year.yearID FROM Stocks.Year " +
-                    "WHERE Stocks.Year.yearNumber = '" + y + "';";
+            String stockSQL = "SELECT Stocks.years.yearID FROM Stocks.years " +
+                    "WHERE Stocks.years.yearValue = '" + y + "';";
+
+            try {
+                rs = s.executeQuery(stockSQL);
+                return rs.next();
+
+            } catch (Exception ex) {
+                return true;
+            }
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        finally
+        {
+            closeConnection(rs, s, conn);
+        }
+        return false;
+    }
+
+    private boolean checkForQuarters() {
+        Connection conn = null;
+        ResultSet rs = null;
+        Statement s = null;
+
+        try {
+            conn = createConnection();
+            s = conn.createStatement();
+
+            String stockSQL = "SELECT Stocks.quarters.quarterID FROM Stocks.quarters;";
 
             try {
                 rs = s.executeQuery(stockSQL);
@@ -459,6 +714,9 @@ public class DatabaseEngine
     }
 
     private void addStock() {
+        /*
+         * Adds the stock symbol and name to table if it doesn't already exist.
+        */
         boolean exists = checkForStock();
         Connection conn = null;
         Statement s = null;
@@ -467,7 +725,7 @@ public class DatabaseEngine
                 conn = createConnection();
                 s = conn.createStatement();
 
-                String sql = "INSERT INTO Stocks.Stock (Stocks.Stock.StockName, Stocks.Stock.StockSymbol) " +
+                String sql = "INSERT INTO Stocks.stocks (Stocks.stocks.StockName, Stocks.stocks.StockSymbol) " +
                         "VALUES ('" + stockName + "', '" + stockSymbol + "');";
                 s.executeUpdate(sql);
             } catch (Exception ex) {
@@ -488,7 +746,7 @@ public class DatabaseEngine
                     conn = createConnection();
                     s = conn.createStatement();
 
-                    String sql = "INSERT INTO Stocks.Year (Stocks.Year.yearNumber) " +
+                    String sql = "INSERT INTO Stocks.years (Stocks.years.yearValue) " +
                             "VALUES ('" + year + "');";
                     s.executeUpdate(sql);
                 } catch (Exception ex) {
