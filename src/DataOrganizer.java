@@ -614,7 +614,7 @@ public class DataOrganizer
                 table.get(i).remove(table.get(i).size() - 1);
                 table.get(i).add("Revenues ($mill)");
             }
-            else if (s.contains("Shr. Equity")) {
+            else if (s.contains("Shr. Equity") && !s.contains("Return")) {
                 table.get(i).remove(table.get(i).size() - 1);
                 table.get(i).add("Share Equity ($mill)");
             }
@@ -624,7 +624,7 @@ public class DataOrganizer
             }
             else if (s.contains("Return on Shr. Equity")) {
                 table.get(i).remove(table.get(i).size() - 1);
-                table.get(i).add("Return on Share Equity");
+                table.get(i).add("Return on Share Equity ($mill)");
             }
             else if (s.contains("Retained to Com Eq")) {
                 table.get(i).remove(table.get(i).size() - 1);

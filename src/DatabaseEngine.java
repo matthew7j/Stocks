@@ -12,11 +12,13 @@ public class DatabaseEngine
     double recentPrice, peRatio, highProj, lowProj, relativePERatio, dividendYield,
             timeliness, safety, technical, priceStability, growthPersistence, predictability;
 
+    int stockID;
+
     String totalDebt, LTDebt, LTInterest, commonStock, marketCap, stockSymbol, stockName, financialStrength;
 
     ArrayList<ArrayList<String>> concreteYearData;
     ArrayList<ArrayList<String>> futureYearData;
-    ArrayList<ArrayList<String>> titlesData;
+    ArrayList<String> titlesData;
     ArrayList<ArrayList<String>> currentPosition;
     ArrayList<ArrayList<String>> quarterlyRevenues;
     ArrayList<ArrayList<String>> earningsPerShare;
@@ -37,28 +39,106 @@ public class DatabaseEngine
         getEarningsPerShare();
         getQuarterlyDividendsPaid();
         getAnnualRates();
+        getConcreteDataArrayListReady();
 
         addStock();
+        getStockID();
         addYears();
         addConcreteYearData();
+    }
+
+    private void getConcreteDataArrayListReady() {
+
+        /*
+         * 1. Reverse each arraylist
+         * 2. replace the d with -
+        */
+
+        concreteYearData.forEach(Collections::reverse);
+        for (ArrayList<String> aConcreteYearData : concreteYearData) {
+            for (int j = 0; j < aConcreteYearData.size(); j++) {
+                if (aConcreteYearData.get(j).contains("d")) {
+                    String s = aConcreteYearData.get(j).replaceAll("d", "-");
+                    aConcreteYearData.set(j, s);
+                }
+            }
+        }
     }
 
     private void addConcreteYearData() {
         Connection conn = null;
         Statement s = null;
-        try {
-            conn = createConnection();
-            s = conn.createStatement();
 
-            String sql = "INSERT INTO Stocks.stocks (Stocks.stocks.StockName, Stocks.stocks.StockSymbol) " +
-                    "VALUES ('" + stockName + "', '" + stockSymbol + "');";
-            s.executeUpdate(sql);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            closeConnection(null, s, conn);
+        if (stockID != -1) {
+            for (int i = 0; i < years.size(); i++) {
+                try {
+                    conn = createConnection();
+                    s = conn.createStatement();
+
+                    String sql = "INSERT INTO Stocks.concreteyeardata " +
+                            "(" +
+                            "Stocks.concreteyeardata.StockID, " +
+                            "Stocks.concreteyeardata.YearID," +
+                            "Stocks.concreteyeardata.RevenuesPerShare," +
+                            "Stocks.concreteyeardata.CashFlowPerShare," +
+                            "Stocks.concreteyeardata.EarningsPerShare," +
+                            "Stocks.concreteyeardata.DividendsDeclaredPerShare," +
+                            "Stocks.concreteyeardata.CapitalSpendingPerShare," +
+                            "Stocks.concreteyeardata.BookValuePerShare," +
+                            "Stocks.concreteyeardata.CommonSharesOutstanding," +
+                            "Stocks.concreteyeardata.AverageAnnualPERatio," +
+                            "Stocks.concreteyeardata.RelativePERatio," +
+                            "Stocks.concreteyeardata.AverageAnnualDividendYield," +
+                            "Stocks.concreteyeardata.Revenues," +
+                            "Stocks.concreteyeardata.OperatingMargin," +
+                            "Stocks.concreteyeardata.Depreciation," +
+                            "Stocks.concreteyeardata.NetProfit," +
+                            "Stocks.concreteyeardata.IncomeTaxRate," +
+                            "Stocks.concreteyeardata.NetProfitMargin," +
+                            "Stocks.concreteyeardata.WorkingCapital," +
+                            "Stocks.concreteyeardata.LongTermDebt," +
+                            "Stocks.concreteyeardata.ShareEquity," +
+                            "Stocks.concreteyeardata.ReturnOnTotalCapital," +
+                            "Stocks.concreteyeardata.ReturnOnShareEquity," +
+                            "Stocks.concreteyeardata.RetainedToCommonEquity," +
+                            "Stocks.concreteyeardata.AllDividendsToNetProfit" +
+                            ") " +
+                            "VALUES " +
+                            "('" +
+                            stockID + "', '" +
+                            getYearID(years.get(i)) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Revenues per share")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Cash Flow per share")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Earnings per share")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Dividends Declared per share")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Capital Spending per share")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Book Value per share")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Common Shares Outstanding")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Average Annual P/E Ratio")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Relative P/E Ratio")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Average Annual Dividend Yield")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Revenues ($mill)")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Operating Margin")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Depreciation ($mill)")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Net Profit ($mill)")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Income Tax Rate")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Net Profit Margin")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Working Capital ($mill)")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Long-Term Debt ($mill)")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Share Equity ($mill)")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Return on Total Capital")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Return on Share Equity ($mill)")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("Retained to Common Equity")).get(i) + "', '" +
+                            concreteYearData.get(titlesData.indexOf("All Dividends to Net Profit")).get(i) + "''" +
+                             "');";
+                    s.executeUpdate(sql);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                } finally {
+                    closeConnection(null, s, conn);
+                }
+            }
         }
-
     }
 
     private void populateQuartersTable() {
@@ -619,6 +699,70 @@ public class DatabaseEngine
         }
     }
 
+    private void getStockID() {
+        Connection conn = null;
+        ResultSet rs = null;
+        Statement s = null;
+
+        try {
+            conn = createConnection();
+            s = conn.createStatement();
+
+            String stockSQL = "SELECT Stocks.stocks.stockID FROM Stocks.stocks " +
+                    "WHERE Stocks.stocks.StockSymbol = '" + stockSymbol + "';";
+
+            try {
+                rs = s.executeQuery(stockSQL);
+                while(rs.next()) {
+                    stockID = rs.getInt("StockID");
+                }
+
+            } catch (Exception ex) {
+                System.out.println(ex);
+            }
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        finally
+        {
+            closeConnection(rs, s, conn);
+        }
+    }
+    private int getYearID(int n) {
+        Connection conn = null;
+        ResultSet rs = null;
+        Statement s = null;
+
+        int id = -1;
+
+        try {
+            conn = createConnection();
+            s = conn.createStatement();
+
+            String stockSQL = "SELECT Stocks.years.yearID FROM Stocks.years " +
+                    "WHERE Stocks.years.YearValue = '" + n + "';";
+
+            try {
+                rs = s.executeQuery(stockSQL);
+                while(rs.next()) {
+                    id = rs.getInt("YearID");
+                }
+
+            } catch (Exception ex) {
+                System.out.println(ex);
+            }
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        finally
+        {
+            closeConnection(rs, s, conn);
+        }
+        return id;
+    }
+
     private boolean checkForStock() {
         /*
          * This function will check the Stocks Database Table and
@@ -717,9 +861,11 @@ public class DatabaseEngine
         /*
          * Adds the stock symbol and name to table if it doesn't already exist.
         */
-        boolean exists = checkForStock();
         Connection conn = null;
         Statement s = null;
+        stockSymbol = stockSymbol.replaceAll("\\s+","");
+        boolean exists = checkForStock();
+
         if (!exists) {
             try {
                 conn = createConnection();
@@ -784,7 +930,6 @@ public class DatabaseEngine
                         String[] words = line.split("\\s+");
                         ArrayList<String> futureTemp = new ArrayList<>();
                         ArrayList<String> concreteTemp = new ArrayList<>();
-                        ArrayList<String> titlesTemp = new ArrayList<>();
 
                         String title = "";
 
@@ -830,8 +975,7 @@ public class DatabaseEngine
                         if (title.length() > 2)
                             title = title.substring(0, title.length() - 1);
 
-                        titlesTemp.add(title);
-                        titlesData.add(titlesTemp);
+                        titlesData.add(title);
                         futureYearData.add(futureTemp);
                         concreteYearData.add(concreteTemp);
                         line = reader.readLine();
