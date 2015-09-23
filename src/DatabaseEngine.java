@@ -9,6 +9,7 @@ public class DatabaseEngine
 {
     File f;
     ArrayList<Integer> years;
+    ArrayList<String> valuesToReport;
     double recentPrice, peRatio, highProj, lowProj, relativePERatio, dividendYield,
             timeliness, safety, technical, priceStability, growthPersistence, predictability;
 
@@ -27,6 +28,7 @@ public class DatabaseEngine
 
     public DatabaseEngine(File f) {
         this.f = f;
+        //fillValuesToReport();
         createDatabase();
         populateQuartersTable();
 
@@ -45,6 +47,33 @@ public class DatabaseEngine
         getStockID();
         addYears();
         addConcreteYearData();
+    }
+
+    private void fillValuesToReport(){
+        valuesToReport.add("Revenues per Share");
+        valuesToReport.add("Cash Flow per share");
+        valuesToReport.add("Earnings per share");
+        valuesToReport.add("Dividends Declared per share");
+        valuesToReport.add("Capital Spending per share");
+        valuesToReport.add("Book Value per share");
+        valuesToReport.add("Common Shares Outstanding");
+        valuesToReport.add("Average Annual P/E Ratio");
+        valuesToReport.add("Relative P/E Ratio");
+        valuesToReport.add("Average Annual Dividend Yield");
+        valuesToReport.add("Revenues ($mill)");
+        valuesToReport.add("Operating Margin");
+        valuesToReport.add("Depreciation ($mill)");
+        valuesToReport.add("Net Profit ($mill)");
+        valuesToReport.add("Income Tax Rate");
+        valuesToReport.add("Net Profit Margin");
+        valuesToReport.add("Working Capital ($mill)");
+        valuesToReport.add("Long-Term Debt ($mill)");
+        valuesToReport.add("Share Equity ($mill)");
+        valuesToReport.add("Return on Total Capital");
+        valuesToReport.add("Return on Share Equity ($mill)");
+        valuesToReport.add("Retained to Common Equity");
+        valuesToReport.add("Income Tax Rate");
+        valuesToReport.add("All Dividends to Net Profit");
     }
 
     private void getConcreteDataArrayListReady() {
@@ -68,7 +97,7 @@ public class DatabaseEngine
                 }
                 else {
                     if (size2 - size == 1) {
-                        concreteYearData.get(i).remove(concreteYearData.size() - 1);
+                        concreteYearData.get(i).remove(concreteYearData.get(i).size() - 1);
                     }
                 }
             }
@@ -120,6 +149,45 @@ public class DatabaseEngine
         return false;
     }
 
+    private HashMap<String, String> populateTitlesFound(HashMap<String, String> a, int i) {
+
+        a.put("Revenues per Share", concreteYearData.get(titlesData.indexOf("Revenues per share")).get(i));
+        a.put("Cash Flow per share", concreteYearData.get(titlesData.indexOf("Cash Flow per share")).get(i));
+        a.put("Earnings per share", concreteYearData.get(titlesData.indexOf("Earnings per share")).get(i));
+        a.put("Dividends Declared per share", concreteYearData.get(titlesData.indexOf("Dividends Declared per share")).get(i));
+        a.put("Capital Spending per share", concreteYearData.get(titlesData.indexOf("Capital Spending per share")).get(i));
+        a.put("Book Value per share", concreteYearData.get(titlesData.indexOf("Book Value per share")).get(i));
+        a.put("Common Shares Outstanding", concreteYearData.get(titlesData.indexOf("Common Shares Outstanding")).get(i));
+        a.put("Average Annual P/E Ratio", concreteYearData.get(titlesData.indexOf("Average Annual P/E Ratio")).get(i));
+        a.put("Relative P/E Ratio", concreteYearData.get(titlesData.indexOf("Relative P/E Ratio")).get(i));
+        a.put("Average Annual Dividend Yield", concreteYearData.get(titlesData.indexOf("Average Annual Dividend Yield")).get(i));
+        a.put("Revenues ($mill)", concreteYearData.get(titlesData.indexOf("Revenues ($mill)")).get(i));
+        a.put("Operating Margin", concreteYearData.get(titlesData.indexOf("Operating Margin")).get(i));
+        a.put("Depreciation ($mill)", concreteYearData.get(titlesData.indexOf("Depreciation ($mill)")).get(i));
+        a.put("Net Profit ($mill)", concreteYearData.get(titlesData.indexOf("Net Profit ($mill)")).get(i));
+        a.put("Income Tax Rate", concreteYearData.get(titlesData.indexOf("Income Tax Rate")).get(i));
+        a.put("Net Profit Margin", concreteYearData.get(titlesData.indexOf("Net Profit Margin")).get(i));
+        a.put("Working Capital ($mill)", concreteYearData.get(titlesData.indexOf("Working Capital ($mill)")).get(i));
+        a.put("Long-Term Debt ($mill)", concreteYearData.get(titlesData.indexOf("Long-Term Debt ($mill)")).get(i));
+        a.put("Share Equity ($mill)", concreteYearData.get(titlesData.indexOf("Share Equity ($mill)")).get(i));
+        a.put("Return on Total Capital", concreteYearData.get(titlesData.indexOf("Return on Total Capital")).get(i));
+        a.put("Return on Share Equity ($mill)", concreteYearData.get(titlesData.indexOf("Return on Share Equity ($mill)")).get(i));
+        a.put("Retained to Common Equity", concreteYearData.get(titlesData.indexOf("Retained to Common Equity")).get(i));
+        a.put("All Dividends to Net Profit", concreteYearData.get(titlesData.indexOf("All Dividends to Net Profit")).get(i));
+        return a;
+    }
+
+    private String checkIfValueExist(String s, int i) {
+        String st;
+        try {
+            st = concreteYearData.get(titlesData.indexOf(s)).get(i);
+        }
+        catch (Exception e) {
+            st = "VOID";
+        }
+        return st;
+    }
+
     private void addConcreteYearData() {
         Connection conn = null;
         Statement s = null;
@@ -164,29 +232,29 @@ public class DatabaseEngine
                                 "('" +
                                 stockID + "', '" +
                                 getYearID(years.get(i)) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Revenues per share")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Cash Flow per share")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Earnings per share")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Dividends Declared per share")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Capital Spending per share")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Book Value per share")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Common Shares Outstanding")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Average Annual P/E Ratio")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Relative P/E Ratio")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Average Annual Dividend Yield")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Revenues ($mill)")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Operating Margin")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Depreciation ($mill)")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Net Profit ($mill)")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Income Tax Rate")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Net Profit Margin")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Working Capital ($mill)")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Long-Term Debt ($mill)")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Share Equity ($mill)")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Return on Total Capital")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Return on Share Equity ($mill)")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("Retained to Common Equity")).get(i) + "', '" +
-                                concreteYearData.get(titlesData.indexOf("All Dividends to Net Profit")).get(i) + "" +
+                                checkIfValueExist("Revenues per share", i) + "', '" +
+                                checkIfValueExist("Cash Flow per share", i) + "', '" +
+                                checkIfValueExist("Earnings per share", i) + "', '" +
+                                checkIfValueExist("Dividends Declared per share", i) + "', '" +
+                                checkIfValueExist("Capital Spending per share", i) + "', '" +
+                                checkIfValueExist("Book Value per share", i) + "', '" +
+                                checkIfValueExist("Common Shares Outstanding", i) + "', '" +
+                                checkIfValueExist("Average Annual P/E Ratio", i) + "', '" +
+                                checkIfValueExist("Relative P/E Ratio", i) + "', '" +
+                                checkIfValueExist("Average Annual Dividend Yield", i) + "', '" +
+                                checkIfValueExist("Revenues ($mill)", i) + "', '" +
+                                checkIfValueExist("Operating Margin", i) + "', '" +
+                                checkIfValueExist("Depreciation ($mill)", i) + "', '" +
+                                checkIfValueExist("Net Profit ($mill)", i) + "', '" +
+                                checkIfValueExist("Income Tax Rate", i) + "', '" +
+                                checkIfValueExist("Net Profit Margin", i) + "', '" +
+                                checkIfValueExist("Working Capital ($mill)", i) + "', '" +
+                                checkIfValueExist("Long-Term Debt ($mill)", i) + "', '" +
+                                checkIfValueExist("Share Equity ($mill)", i) + "', '" +
+                                checkIfValueExist("Return on Total Capital", i) + "', '" +
+                                checkIfValueExist("Return on Share Equity ($mill)", i) + "', '" +
+                                checkIfValueExist("Retained to Common Equity", i) + "', '" +
+                                checkIfValueExist("All Dividends to Net Profit", i) + "''" +
                                 "');";
                         s.executeUpdate(sql);
                     } catch (Exception ex) {
@@ -1018,7 +1086,10 @@ public class DatabaseEngine
                                         }
                                     }
                                     else {
-                                        if (!Objects.equals(words[i], "")) {
+                                        if (!Objects.equals(words[i], "") &&
+                                                !Objects.equals(words[i], "Nil") &&
+                                                !Objects.equals(words[i], "--") &&
+                                                !Objects.equals(words[i], "NMF")) {
                                             String oldTitle = title;
                                             title = words[i] + " " + oldTitle;
                                          }

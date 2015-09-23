@@ -559,7 +559,7 @@ public class DataOrganizer
             String firstWord = s.substring(0, s.indexOf(' '));
             String secondWord = s.split("\\s+")[1];
 
-            if (s.contains("Revenues per")) {
+            if (s.contains("Revenues per") || s.contains("Sales per")) {
                 table.get(i).remove(table.get(i).size() - 1);
                 table.get(i).add("Revenues per share");
             }
@@ -599,6 +599,14 @@ public class DataOrganizer
                 table.get(i).remove(table.get(i).size() - 1);
                 table.get(i).add("Relative P/E Ratio");
             }
+            else if (s.contains("Gross Margin D")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Gross Margin");
+            }
+            else if (s.contains("Number of Stores E")) {
+                table.get(i).remove(table.get(i).size() - 1);
+                table.get(i).add("Number of Stores");
+            }
             else if (firstWord.contains("Avg") &&
                     secondWord.contains("Ann") &&
                     s.contains("Yield")) {
@@ -610,7 +618,7 @@ public class DataOrganizer
                 table.get(i).remove(table.get(i).size() - 1);
                 table.get(i).add("Working Capital ($mill)");
             }
-            else if (s.contains("Revenues ($mill)")) {
+            else if (s.contains("Revenues ($mill)") || s.contains("Sales ($mill)")) {
                 table.get(i).remove(table.get(i).size() - 1);
                 table.get(i).add("Revenues ($mill)");
             }
