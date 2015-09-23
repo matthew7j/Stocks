@@ -51,10 +51,29 @@ public class DatabaseEngine
 
         /*
          * 1. Reverse each arraylist
-         * 2. replace the d with -
+         * 2. Prepend all concrete data arraylists with "void" to line everything up
+         * 3. replace the d with -
         */
 
         concreteYearData.forEach(Collections::reverse);
+
+        int size = concreteYearData.get(0).size();
+        for (int i = 0; i < concreteYearData.size(); i++) {
+            if (concreteYearData.get(i).size() != size) {
+                int size2 = concreteYearData.get(i).size();
+                if (size2 < size) {
+                    for (int j = 0; j < size - size2; j++) {
+                        concreteYearData.get(i).add(0, "VOID");
+                    }
+                }
+                else {
+                    if (size2 - size == 1) {
+                        concreteYearData.get(i).remove(concreteYearData.size() - 1);
+                    }
+                }
+            }
+        }
+
         for (ArrayList<String> aConcreteYearData : concreteYearData) {
             for (int j = 0; j < aConcreteYearData.size(); j++) {
                 if (aConcreteYearData.get(j).contains("d")) {
@@ -65,77 +84,116 @@ public class DatabaseEngine
         }
     }
 
+    private boolean checkIfStockYearDataExists(int i) {
+        /*
+         * This function will check the Concrete Year DB to see if information is there.
+        */
+
+        Connection conn = null;
+        ResultSet rs = null;
+        Statement s = null;
+
+        try {
+            conn = createConnection();
+            s = conn.createStatement();
+
+            String stockSQL = "SELECT Stocks.concreteyeardata.ConcreteYearDataID " +
+                    "FROM Stocks.concreteyeardata " +
+                    "WHERE Stocks.concreteyeardata.StockID = '" + stockID + "' " +
+                    "AND Stocks.concreteyeardata.YearID= '" + getYearID(i) +"';";
+
+            try {
+                rs = s.executeQuery(stockSQL);
+                return rs.next();
+
+            } catch (Exception ex) {
+                return true;
+            }
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        finally
+        {
+            closeConnection(rs, s, conn);
+        }
+        return false;
+    }
+
     private void addConcreteYearData() {
         Connection conn = null;
         Statement s = null;
 
         if (stockID != -1) {
-            for (int i = 0; i < years.size(); i++) {
-                try {
-                    conn = createConnection();
-                    s = conn.createStatement();
 
-                    String sql = "INSERT INTO Stocks.concreteyeardata " +
-                            "(" +
-                            "Stocks.concreteyeardata.StockID, " +
-                            "Stocks.concreteyeardata.YearID," +
-                            "Stocks.concreteyeardata.RevenuesPerShare," +
-                            "Stocks.concreteyeardata.CashFlowPerShare," +
-                            "Stocks.concreteyeardata.EarningsPerShare," +
-                            "Stocks.concreteyeardata.DividendsDeclaredPerShare," +
-                            "Stocks.concreteyeardata.CapitalSpendingPerShare," +
-                            "Stocks.concreteyeardata.BookValuePerShare," +
-                            "Stocks.concreteyeardata.CommonSharesOutstanding," +
-                            "Stocks.concreteyeardata.AverageAnnualPERatio," +
-                            "Stocks.concreteyeardata.RelativePERatio," +
-                            "Stocks.concreteyeardata.AverageAnnualDividendYield," +
-                            "Stocks.concreteyeardata.Revenues," +
-                            "Stocks.concreteyeardata.OperatingMargin," +
-                            "Stocks.concreteyeardata.Depreciation," +
-                            "Stocks.concreteyeardata.NetProfit," +
-                            "Stocks.concreteyeardata.IncomeTaxRate," +
-                            "Stocks.concreteyeardata.NetProfitMargin," +
-                            "Stocks.concreteyeardata.WorkingCapital," +
-                            "Stocks.concreteyeardata.LongTermDebt," +
-                            "Stocks.concreteyeardata.ShareEquity," +
-                            "Stocks.concreteyeardata.ReturnOnTotalCapital," +
-                            "Stocks.concreteyeardata.ReturnOnShareEquity," +
-                            "Stocks.concreteyeardata.RetainedToCommonEquity," +
-                            "Stocks.concreteyeardata.AllDividendsToNetProfit" +
-                            ") " +
-                            "VALUES " +
-                            "('" +
-                            stockID + "', '" +
-                            getYearID(years.get(i)) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Revenues per share")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Cash Flow per share")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Earnings per share")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Dividends Declared per share")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Capital Spending per share")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Book Value per share")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Common Shares Outstanding")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Average Annual P/E Ratio")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Relative P/E Ratio")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Average Annual Dividend Yield")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Revenues ($mill)")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Operating Margin")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Depreciation ($mill)")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Net Profit ($mill)")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Income Tax Rate")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Net Profit Margin")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Working Capital ($mill)")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Long-Term Debt ($mill)")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Share Equity ($mill)")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Return on Total Capital")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Return on Share Equity ($mill)")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("Retained to Common Equity")).get(i) + "', '" +
-                            concreteYearData.get(titlesData.indexOf("All Dividends to Net Profit")).get(i) + "''" +
-                             "');";
-                    s.executeUpdate(sql);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                } finally {
-                    closeConnection(null, s, conn);
+            for (int i = 0; i < concreteYearData.get(0).size(); i++) {
+                if (!checkIfStockYearDataExists(years.get(i))) {
+                    try {
+                        conn = createConnection();
+                        s = conn.createStatement();
+
+                        String sql = "INSERT INTO Stocks.concreteyeardata " +
+                                "(" +
+                                "Stocks.concreteyeardata.StockID, " +
+                                "Stocks.concreteyeardata.YearID," +
+                                "Stocks.concreteyeardata.RevenuesPerShare," +
+                                "Stocks.concreteyeardata.CashFlowPerShare," +
+                                "Stocks.concreteyeardata.EarningsPerShare," +
+                                "Stocks.concreteyeardata.DividendsDeclaredPerShare," +
+                                "Stocks.concreteyeardata.CapitalSpendingPerShare," +
+                                "Stocks.concreteyeardata.BookValuePerShare," +
+                                "Stocks.concreteyeardata.CommonSharesOutstanding," +
+                                "Stocks.concreteyeardata.AverageAnnualPERatio," +
+                                "Stocks.concreteyeardata.RelativePERatio," +
+                                "Stocks.concreteyeardata.AverageAnnualDividendYield," +
+                                "Stocks.concreteyeardata.Revenues," +
+                                "Stocks.concreteyeardata.OperatingMargin," +
+                                "Stocks.concreteyeardata.Depreciation," +
+                                "Stocks.concreteyeardata.NetProfit," +
+                                "Stocks.concreteyeardata.IncomeTaxRate," +
+                                "Stocks.concreteyeardata.NetProfitMargin," +
+                                "Stocks.concreteyeardata.WorkingCapital," +
+                                "Stocks.concreteyeardata.LongTermDebt," +
+                                "Stocks.concreteyeardata.ShareEquity," +
+                                "Stocks.concreteyeardata.ReturnOnTotalCapital," +
+                                "Stocks.concreteyeardata.ReturnOnShareEquity," +
+                                "Stocks.concreteyeardata.RetainedToCommonEquity," +
+                                "Stocks.concreteyeardata.AllDividendsToNetProfit" +
+                                ") " +
+                                "VALUES " +
+                                "('" +
+                                stockID + "', '" +
+                                getYearID(years.get(i)) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Revenues per share")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Cash Flow per share")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Earnings per share")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Dividends Declared per share")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Capital Spending per share")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Book Value per share")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Common Shares Outstanding")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Average Annual P/E Ratio")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Relative P/E Ratio")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Average Annual Dividend Yield")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Revenues ($mill)")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Operating Margin")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Depreciation ($mill)")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Net Profit ($mill)")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Income Tax Rate")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Net Profit Margin")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Working Capital ($mill)")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Long-Term Debt ($mill)")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Share Equity ($mill)")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Return on Total Capital")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Return on Share Equity ($mill)")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("Retained to Common Equity")).get(i) + "', '" +
+                                concreteYearData.get(titlesData.indexOf("All Dividends to Net Profit")).get(i) + "" +
+                                "');";
+                        s.executeUpdate(sql);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    } finally {
+                        closeConnection(null, s, conn);
+                    }
                 }
             }
         }
